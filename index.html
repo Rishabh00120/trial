@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AuraDrop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        // Initialize the PDF worker immediately
+        const pdfjsLib = window['pdfjs-dist/build/pdf'];
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body { 
+            font-family: 'Outfit', sans-serif; 
+            background-color: #f1f5f9; /* Light gray background */
+            color: #1e293b;
+        }
+        
+        .loader {
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top: 2px solid #fff;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .card-enter { animation: slideUp 0.4s ease-out forwards; }
+        
+        .btn-gradient {
+            background-image: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            transition: all 0.2s ease;
+        }
+        .btn-gradient:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+        .btn-gradient:active { transform: translateY(0); }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #e2e8f0; }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+        .privacy-content h2 {
+            font-size: 1.5rem; 
+            font-weight: 700; 
+            margin-top: 1.5rem; 
+            margin-bottom: 0.5rem; 
+            color: #1e293b; 
+        }
+        .privacy-content h3 {
+            font-size: 1.25rem; 
+            font-weight: 600; 
+            margin-top: 1rem; 
+            margin-bottom: 0.5rem; 
+            color: #334155; 
+        }
+        .privacy-content p {
+            margin-bottom: 1rem; 
+            line-height: 1.625; 
+            color: #475569; 
+        }
+        .privacy-content ul {
+            list-style-type: disc;
+            margin-left: 1.5rem; 
+            margin-bottom: 1rem; 
+            color: #475569; 
+        }
+        .privacy-content strong {
+            color: #334155; 
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-row overflow-hidden antialiased">
+
+    <aside id="sidebar" class="w-64 bg-slate-900 text-slate-300 flex flex-col z-40 h-full fixed md:relative transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
+        
+        <div class="flex items-center gap-3 p-5 border-b border-slate-700">
+            <div class="bg-gradient-to-br from-indigo-500 to-violet-600 text-white w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                <i class="fa-solid fa-cloud-arrow-down text-lg"></i>
+            </div>
+            <h1 class="font-bold text-xl tracking-tight text-white">Aura<span class="text-violet-300 font-normal">Drop</span></h1>
+        </div>
+
+        <nav id="sidebar-nav" class="flex-1 p-4 space-y-2">
+            <a href="javascript:void(0)" onclick="window.showPage('home')" id="nav-home" class="flex items-center gap-3 px-4 py-2.5 rounded-lg bg-indigo-600 text-white font-medium">
+                <i class="fa-solid fa-house w-5 text-center"></i>
+                <span>Home</span>
+            </a>
+            <a href="javascript:void(0)" onclick="window.showPage('all-files')" id="nav-all-files" class="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-slate-800 transition-colors">
+                <i class="fa-solid fa-folder w-5 text-center"></i>
+                <span>All Files</span>
+            </a>
+			<a href="javascript:void(0)" onclick="window.showPage('about')" id="nav-about" class="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-slate-800 transition-colors">
+                <i class="fa-solid fa-info-circle w-5 text-center"></i>
+                <span>About</span>
+            </a>
+			<a href="javascript:void(0)" onclick="window.showPage('terms')" id="nav-terms" class="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-slate-800 transition-colors">
+                <i class="fa-solid fa-file-contract w-5 text-center"></i>
+                <span>Terms of Use</span>
+            </a>
+            <a href="javascript:void(0)" onclick="window.showPage('privacy')" id="nav-privacy" class="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-slate-800 transition-colors">
+                <i class="fa-solid fa-shield-halved w-5 text-center"></i>
+                <span>Privacy Policy</span>
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-slate-700">
+            <button onclick="window.showUploadModal()" class="w-full btn-gradient text-white text-sm font-bold px-5 py-3 rounded-xl flex items-center justify-center gap-2 shadow-md">
+                <i class="fa-solid fa-plus"></i>
+                <span>Create New Upload</span>
+            </button>
+        </div>
+
+        <footer class="p-4 border-t border-slate-700 space-y-3">
+            <div class="bg-slate-800 px-4 py-2 rounded-full flex items-center justify-between gap-3 text-xs shadow-lg">
+                <div class="flex items-center gap-2">
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 hidden" id="status-ping"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-500" id="status-dot"></span>
+                    </span>
+                    <span id="connection-text" class="font-medium">Connecting...</span>
+                </div>
+                <div id="user-id-display" class="font-mono opacity-70">...</div>
+            </div>
+            <p class="text-xs text-slate-500 text-center">&copy; 2025 AuraDrop. All rights reserved.</p>
+        </footer>
+    </aside>
+
+    <div id="sidebar-overlay" onclick="window.toggleSidebar()" class="fixed inset-0 bg-black/60 z-30 hidden md:hidden"></div>
+
+    <div class="flex-1 flex flex-col h-full overflow-hidden">
+        
+        <div id="page-home" class="flex flex-col h-full">
+            <header class="bg-white border-b border-slate-200 p-4 flex justify-between items-center z-20 flex-shrink-0">
+                <div class="flex items-center gap-3">
+                    <button id="menu-toggle" onclick="window.toggleSidebar()" class="md:hidden text-slate-600 hover:text-slate-900 p-2 rounded-lg">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                    
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Live Feed</h2>
+                        <p class="text-slate-600 text-sm">Only owners can delete</p>
+                    </div>
+                </div>
+                
+                <div class="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-xs font-mono font-medium" id="item-count">Loading...</div>
+            </header>
+
+            <main class="flex-1 relative overflow-y-auto">
+                
+                <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+                    <div class="absolute -top-20 -left-20 w-96 h-96 bg-indigo-200/50 rounded-full blur-3xl opacity-60"></div>
+                    <div class="absolute bottom-0 right-0 w-96 h-96 bg-pink-200/50 rounded-full blur-3xl opacity-60"></div>
+                </div>
+
+                <div id="feed" class="w-full max-w-5xl mx-auto p-6 pb-20 space-y-4 z-10 relative">
+                    <div class="bg-white/80 backdrop-blur-sm p-6 rounded-2xl animate-pulse shadow-sm">
+                        <div class="h-12 w-12 bg-slate-200 rounded-xl mb-4"></div>
+                        <div class="h-4 w-3/4 bg-slate-200 rounded mb-2"></div>
+                        <div class="h-4 w-1/2 bg-slate-200 rounded"></div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <div id="page-all-files" class="hidden flex flex-col overflow-hidden">
+            <header class="bg-white border-b border-slate-200 p-4 flex justify-between items-center z-20 flex-shrink-0">
+                <div class="flex items-center gap-3">
+                    <button onclick="window.toggleSidebar()" class="md:hidden text-slate-600 hover:text-slate-900 p-2 rounded-lg">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                    
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">All Files</h2>
+                        <p class="text-slate-600 text-sm">Browse and search all uploads</p>
+                    </div>
+                </div>
+                
+                <div class="w-full max-w-xs">
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-search text-slate-400"></i>
+                        </div>
+                        <input type="text" id="search-input" onkeyup="window.filterAllFiles()" placeholder="Search by title..." class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-100 border border-transparent focus:bg-white focus:border-indigo-300 focus:ring-2 focus:ring-indigo-200 outline-none text-sm transition-all">
+                    </div>
+                </div>
+            </header>
+
+            <main class="flex-1 relative overflow-y-auto p-6 pb-20">
+                <div class="bg-white w-full max-w-7xl mx-auto rounded-2xl shadow-sm overflow-x-auto">
+                    <table class="w-full text-left" id="all-files-table">
+                        <thead class="border-b border-slate-200 bg-slate-50">
+                            <tr>
+                                <th class="p-4 text-sm font-semibold text-slate-600">Name</th>
+                                <th class="p-4 text-sm font-semibold text-slate-600 hidden md:table-cell">Type</th>
+                                <th class="p-4 text-sm font-semibold text-slate-600 hidden sm:table-cell">Date</th>
+                                <th class="p-4 text-sm font-semibold text-slate-600 min-w-[120px]"></th> </tr>
+                        </thead>
+                        <tbody id="all-files-tbody">
+                            <tr>
+                                <td colspan="4" class="p-6 text-center text-slate-500">
+                                    <i class="fa-solid fa-spinner fa-spin text-2xl"></i>
+                                    <p>Loading files...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </main>
+        </div>
+
+        <div id="page-privacy" class="hidden flex flex-col h-full">
+             <header class="bg-white border-b border-slate-200 p-4 flex justify-between items-center z-20 flex-shrink-0">
+                <div class="flex items-center gap-3">
+                    <button onclick="window.toggleSidebar()" class="md:hidden text-slate-600 hover:text-slate-900 p-2 rounded-lg">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Privacy Policy</h2>
+                        <p class="text-slate-600 text-sm">Last updated: Nov 13, 2025</p>
+                    </div>
+                </div>
+            </header>
+
+            <main class="flex-1 relative overflow-y-auto p-6 md:p-10">
+                <div class="bg-white w-full max-w-4xl mx-auto p-8 md:p-12 rounded-2xl shadow-sm privacy-content">
+				    <h1 class="text-3xl font-bold mb-6 text-slate-900">Privacy Policy</h1>
+                    <h2 class="!mt-0">Introduction</h2>
+                    <p>Welcome to AuraDrop. This application is a demonstration project. This Privacy Policy explains how we handle your information when you use our service.</p>
+                    <p>By using this service, you agree to the collection and use of information in accordance with this policy. <strong>Do not upload any sensitive, private, or confidential information.</strong></p>
+
+                    <h2>Information We Collect</h2>
+                    <p>We collect two types of information:</p>
+                    <h3>1. Anonymous User ID</h3>
+                    <p>When you first visit the site, our backend provider (Firebase) assigns you a unique, anonymous user ID. This ID is stored in your browser's local storage. It is not linked to your name, email, or any other personal information. We use this ID solely to distinguish your uploads from those of other users.</p>
+                    <h3>2. User-Uploaded Content</h3>
+                    <p>We collect and store the content you explicitly upload, which includes:</p>
+                    <ul>
+                        <li><strong>Files:</strong> The file itself (up to 500KB), which is stored as a Base64 text string.</li>
+                        <li><strong>Links:</strong> The URL you provide.</li>
+                        <li><strong>Title:</strong> The title or description you add to your upload.</li>
+                    </ul>
+
+                    <h2>How We Use and Share Information</h2>
+                    <p>Your information is used for the following purposes:</p>
+                    <ul>
+                        <li><strong>To Provide the Service:</strong> To display the files and links you upload in the "Live Feed."</li>
+                        <li><strong>To Enable Deletion:</strong> To identify which files you "own" so that we can show you the delete button for those items.</li>
+                    </ul>
+                    <p><strong>All content you upload is publicly visible.</strong> Anyone with a link to this web application can see, access, and download the files and links you post.</p>
+
+                    <h2>Data Security and Deletion</h2>
+                    <p>We have implemented security rules in our database to ensure that only the user with the matching anonymous ID can delete their own content. While the "Delete" button is hidden from other users, these backend rules provide an extra layer of security to prevent unauthorized deletion.</p>
+                    <p>However, please be aware that:</p>
+                    <ul>
+                        <li>If you clear your browser's cache or use a different device, you will be assigned a new anonymous ID and will **lose the ability** to delete your previously uploaded files.</li>
+                        <li>This application is a demonstration and runs on "Test Mode" rules. We make no guarantees about the permanent security or availability of your data.</li>
+                    </ul>
+
+                    <h2>Changes to This Policy</h2>
+                    <p>We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new policy on this page.</p>
+                </div>
+            </main>
+        </div>
+
+        <div id="page-terms" class="hidden flex flex-col h-full">
+             <header class="bg-white border-b border-slate-200 p-4 flex justify-between items-center z-20 flex-shrink-0">
+                <div class="flex items-center gap-3">
+                    <button onclick="window.toggleSidebar()" class="md:hidden text-slate-600 hover:text-slate-900 p-2 rounded-lg">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Terms of Use</h2>
+                        <p class="text-slate-600 text-sm">Last updated: Nov 13, 2025</p>
+                    </div>
+                </div>
+            </header>
+
+            <main class="flex-1 relative overflow-y-auto p-6 md:p-10">
+                <div class="bg-white w-full max-w-4xl mx-auto p-8 md:p-12 rounded-2xl shadow-sm privacy-content">
+				    <h1 class="text-3xl font-bold mb-6 text-slate-900">Terms Of Use</h1>
+                    <h3 class="!mt-0">1. Purpose of AuraDrop</h3>
+                    <p>AuraDrop is an online platform created exclusively for academic use, including:</p>
+                    <ul>
+                        <li>Uploading notes</li>
+                        <li>Sharing assignments</li>
+                        <li>Submitting project files</li>
+                        <li>Accessing class-related materials</li>
+                    </ul>
+                    <p>AuraDrop should not be used for entertainment content, personal storage, or any non-academic activity.</p>
+                    
+                    <h3>2. Acceptable Use</h3>
+                    <p>You agree to use AuraDrop responsibly and legally. You may not upload, share, or store:</p>
+                    <ul>
+                        <li>Inappropriate, harmful, or offensive content</li>
+                        <li>Copyrighted media (movies, songs, games, software)</li>
+                        <li>Malware, hacking tools, or suspicious files</li>
+                        <li>Personal identification documents (ID cards, certificates, etc.)</li>
+                        <li>Any content unrelated to studies</li>
+                    </ul>
+                    <p>We reserve the right to remove any file or account that violates these rules.</p>
+                    
+                    <h3>3. User Responsibilities</h3>
+                    <p>By using AuraDrop, you agree to:</p>
+                    <ul>
+                        <li>Upload only academic and safe content</li>
+                        <li>Respect other users’ privacy and files</li>
+                        <li>Avoid attempting to bypass security or misuse features</li>
+                        <li>Not share login credentials with others</li>
+                        <li>Report suspicious files or activities if noticed</li>
+                    </ul>
+                    <p>You are responsible for all content uploaded from your account.</p>
+                    
+                    <h3>4. Privacy & Data</h3>
+                    <p>AuraDrop collects minimal data necessary for platform operation, such as:</p>
+                    <ul>
+                        <li>File names and metadata</li>
+                        <li>Basic account/login details</li>
+                    </ul>
+                    <p>Files uploaded to AuraDrop may be removed automatically after inactivity or violation of rules.</p>
+                    
+                    <h3>5. Content Ownership</h3>
+                    <p>You retain ownership of files you upload. However, by uploading them to AuraDrop, you grant us permission to:</p>
+                    <ul>
+                        <li>Store the files on our server</li>
+                        <li>Display them to users you have chosen to share them with</li>
+                        <li>Delete them if they violate policies or after your account is removed</li>
+                    </ul>
+                    <p>We do not claim rights over your academic content.</p>
+                    
+                    <h3>6. Prohibited Actions</h3>
+                    <p>You are strictly prohibited from:</p>
+                    <ul>
+                        <li>Uploading illegal, harmful, or offensive content</li>
+                        <li>Using bots, scripts, or automated tools to access the platform</li>
+                        <li>Interfering with website security or performance</li>
+                        <li>Attempting to gain unauthorized access to another user’s files</li>
+                        <li>Using AuraDrop for harassment, cheating, or plagiarism</li>
+                    </ul>
+                    <p>Violations may lead to immediate account suspension or permanent ban.</p>
+                    
+                    <h3>7. Service Availability</h3>
+                    <p>AuraDrop aims to provide stable and continuous service, but we cannot guarantee:</p>
+                    <ul>
+                        <li>24/7 uptime</li>
+                        <li>No data loss</li>
+                        <li>Perfect storage reliability</li>
+                    </ul>
+                    <p>Backup your important files separately. AuraDrop is meant as a convenience tool, not permanent storage.</p>
+                    
+                    <h3>8. Account Termination</h3>
+                    <p>We may suspend or terminate accounts that:</p>
+                    <ul>
+                        <li>Upload banned or harmful content</li>
+                        <li>Repeatedly violate usage rules</li>
+                        <li>Engage in security breaches</li>
+                        <li>Misuse the platform for non-academic purposes</li>
+                    </ul>
+                    <p>Users may also request account deletion by contacting support.</p>
+                    
+                    <h3>9. Changes to These Terms</h3>
+                    <p>AuraDrop may update these Terms of Use at any time.</p>
+                    <p>You will be informed of major changes, and continued use of the website means you accept the updated terms.</p>
+                </div>
+            </main>
+        </div>
+
+        <div id="page-about" class="hidden flex flex-col h-full">
+             <header class="bg-white border-b border-slate-200 p-4 flex justify-between items-center z-20 flex-shrink-0">
+                <div class="flex items-center gap-3">
+                    <button onclick="window.toggleSidebar()" class="md:hidden text-slate-600 hover:text-slate-900 p-2 rounded-lg">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">About AuraDrop</h2>
+                        <p class="text-slate-600 text-sm">A student file sharing platform.</p>
+                    </div>
+                </div>
+            </header>
+
+            <main class="flex-1 relative overflow-y-auto p-6 md:p-10">
+                <div class="bg-white w-full max-w-4xl mx-auto p-8 md:p-12 rounded-2xl shadow-sm privacy-content">
+				    <h1 class="text-3xl font-bold mb-6 text-slate-900">About AuraDrop</h1>
+                    <p class="!mt-0">AuraDrop is a modern cloud platform built especially for students. Our goal is simple: to make sharing notes, assignments, and academic files fast, secure, and effortless.</p>
+                    <p>We understand how challenging it can be to manage class materials, organize projects, or exchange notes with classmates. AuraDrop was created to solve that problem — giving students a clean, reliable space to upload, store, and share study-related documents from any device.</p>
+                    
+                    <h3>Our Mission</h3>
+                    <p>To help students learn better by providing a safe, clutter-free platform dedicated entirely to academic file sharing.</p>
+                    
+                    <h3>What AuraDrop Offers</h3>
+                    <ul>
+                        <li>Easy upload and download of study materials</li>
+                        <li>Simple sharing options for classmates</li>
+                        <li>Secure storage for your academic work</li>
+                        <li>A dedicated space only for notes, assignments, and projects</li>
+                        <li>Fast, responsive design for quick access</li>
+                    </ul>
+                    <p>AuraDrop is built with a student-first mindset, keeping the interface simple and the experience smooth.</p>
+                    
+                    <h3>Our Values</h3>
+                    <p>We believe in:</p>
+                    <ul>
+                        <li>Clean and responsible content</li>
+                        <li>Safe and respectful usage</li>
+                        <li>A distraction-free learning environment</li>
+                        <li>A platform that supports productivity, not misuse</li>
+                    </ul>
+                    <p>AuraDrop is not meant for entertainment files, illegal uploads, or non-academic content — our focus stays strictly on learning.</p>
+                    
+                    <h3>Our Promise</h3>
+                    <p>We are committed to improving AuraDrop continuously, adding features that support students while maintaining a safe, reliable, and easy-to-use platform.</p>
+                    <p>Together, let’s build a better way to study, share, and succeed.</p>
+                </div>
+            </main>
+        </div>
+
+
+    </div>
+
+
+    <button onclick="window.showUploadModal()" class="md:hidden fixed bottom-6 right-6 w-14 h-14 btn-gradient rounded-full flex items-center justify-center text-white shadow-lg z-50 transform transition-all hover:scale-105 active:scale-100">
+        <i class="fa-solid fa-plus text-xl"></i>
+    </button>
+    <div id="upload-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4 transition-opacity opacity-0">
+        <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl transform scale-95 transition-all duration-200 overflow-hidden" id="modal-content">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <h3 class="font-bold text-slate-800 text-lg">New Upload</h3>
+                <button onclick="window.hideUploadModal()" class="w-8 h-8 rounded-full bg-white hover:bg-slate-100 text-slate-400 flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 space-y-5">
+                <div class="flex bg-slate-100 p-1 rounded-xl">
+                    <button onclick="window.setUploadType('file')" id="btn-type-file" class="flex-1 py-2 text-sm font-bold rounded-lg bg-white text-indigo-600 shadow-sm transition-all">File</button>
+                    <button onclick="window.setUploadType('link')" id="btn-type-link" class="flex-1 py-2 text-sm font-bold rounded-lg text-slate-500 hover:text-slate-700 transition-all">Link</button>
+                </div>
+
+                <div id="input-group-file">
+                    <label class="block border-2 border-dashed border-indigo-100 bg-indigo-50/30 hover:bg-indigo-50 rounded-2xl h-32 flex flex-col items-center justify-center cursor-pointer transition-colors group">
+                        <input type="file" id="file-input" class="hidden" onchange="window.handleFileSelect(this)">
+                        <i class="fa-solid fa-cloud-arrow-up text-2xl text-indigo-400 mb-2 group-hover:scale-110 transition-transform"></i>
+                        <span id="file-name-display" class="text-sm font-medium text-indigo-900">Tap to browse</span>
+                        <span class="text-xs text-indigo-400 mt-1">Max 500KB</span>
+                    </label>
+                </div>
+
+                <div id="input-group-link" class="hidden">
+                    <input type="url" id="link-input" placeholder="https://example.com" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus-outline-none focus:ring-2 focus:ring-indigo-500/50 text-sm">
+                </div>
+
+                <input type="text" id="title-input" placeholder="Title or Description..." class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus-outline-none focus:ring-2 focus:ring-indigo-500/50 text-sm">
+                
+                <button onclick="window.executeUpload()" id="btn-submit" class="w-full btn-gradient text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-200 flex justify-center items-center gap-2">
+                    <span>Upload Item</span>
+                    <i class="fa-solid fa-paper-plane text-xs"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container" class="fixed top-24 right-6 z-[70] flex flex-col gap-2 w-full max-w-xs pointer-events-none"></div>
+
+    <div id="preview-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4 transition-opacity opacity-0" onclick="window.hidePreview()">
+        <div class="bg-white w-full max-w-4xl max-h-[90vh] rounded-3xl shadow-2xl transform scale-95 transition-all duration-200 overflow-hidden flex flex-col" id="preview-modal-content" onclick="event.stopPropagation()">
+            <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 flex-shrink-0">
+                <h3 id="preview-title" class="font-bold text-slate-800 text-lg truncate pr-4">Preview</h3>
+                <button onclick="window.hidePreview()" class="w-8 h-8 rounded-full bg-white hover:bg-slate-100 text-slate-400 flex items-center justify-center transition-colors flex-shrink-0">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <div id="preview-content-area" class="p-4 flex-1 overflow-auto bg-slate-100 flex items-center justify-center">
+                <p class="text-slate-500">Loading preview...</p>
+            </div>
+        </div>
+    </div>
+   <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+        // Paste your actual URL and Anon Key here
+        const supabaseUrl = 'https://sdyzkofabmolggoylvov.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkeXprb2ZhYm1vbGdnb3lsdm92Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwMTIzMzYsImV4cCI6MjA4NzU4ODMzNn0.uJPEZGnKAKDvmOfYmty80GiQgR6aWwiNO6sg1dvJ0J8'; // DOUBLE CHECK THIS KEY!
+        const supabase = createClient(supabaseUrl, supabaseKey);
+
+        const canvasConfig = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
+        const canvasAppId = typeof __app_id !== 'undefined' ? __app_id : 'default-app';
+        const activeConfig = canvasConfig ? JSON.parse(canvasConfig) : null;
+        const isLocalMode = false; // Forced to false so it uses Supabase
+
+        // ==========================================
+        // UI STATE & FUNCTIONS
+        // ==========================================
+
+        let currentUploadType = 'file';
+        let currentUser;
+        let allItems = []; // For search filtering
+
+        let localUser = { id: 'local-user-' + Math.floor(Math.random()*1000), isAnonymous: true };
+
+        // --- Page Routing ---
+        const pages = ['home', 'all-files', 'privacy', 'terms', 'about'];
+        const navLinks = ['nav-home', 'nav-all-files', 'nav-privacy', 'nav-terms', 'nav-about'];
+
+        window.showPage = (pageId) => {
+            pages.forEach(id => document.getElementById(`page-${id}`).classList.add('hidden'));
+            document.getElementById(`page-${pageId}`).classList.remove('hidden');
+
+            navLinks.forEach(id => {
+                const link = document.getElementById(id);
+                link.classList.remove('bg-indigo-600', 'text-white', 'font-medium');
+                link.classList.add('hover:bg-slate-800', 'transition-colors');
+            });
+
+            if (pageId === 'home') {
+                document.getElementById('nav-home').classList.add('bg-indigo-600', 'text-white', 'font-medium');
+            } else if (pageId === 'all-files') {
+                document.getElementById('nav-all-files').classList.add('bg-indigo-600', 'text-white', 'font-medium');
+            } else if (pageId === 'privacy') {
+                 document.getElementById('nav-privacy').classList.add('bg-indigo-600', 'text-white', 'font-medium');
+            } else if (pageId === 'terms') {
+                 document.getElementById('nav-terms').classList.add('bg-indigo-600', 'text-white', 'font-medium');
+            } else if (pageId === 'about') {
+                 document.getElementById('nav-about').classList.add('bg-indigo-600', 'text-white', 'font-medium');
+            }
+            window.closeSidebarIfMobile();
+        };
+
+        // --- Sidebar Toggle Functions ---
+        window.toggleSidebar = () => {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        };
+
+        window.closeSidebarIfMobile = () => {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            if (window.innerWidth < 768) { 
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            }
+        };
+
+        // --- Modal Functions ---
+        window.showUploadModal = () => {
+            window.closeSidebarIfMobile(); 
+            const modal = document.getElementById('upload-modal');
+            modal.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('#modal-content').classList.remove('scale-95');
+                modal.querySelector('#modal-content').classList.add('scale-100');
+            });
+        };
+
+        window.hideUploadModal = () => {
+            const modal = document.getElementById('upload-modal');
+            modal.classList.add('opacity-0');
+            modal.querySelector('#modal-content').classList.remove('scale-100');
+            modal.querySelector('#modal-content').classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 200);
+        };
+
+        window.setUploadType = (type) => {
+            currentUploadType = type;
+            const fileBtn = document.getElementById('btn-type-file');
+            const linkBtn = document.getElementById('btn-type-link');
+            const fileGroup = document.getElementById('input-group-file');
+            const linkGroup = document.getElementById('input-group-link');
+
+            if (type === 'file') {
+                fileBtn.className = "flex-1 py-2 text-sm font-bold rounded-lg bg-white text-indigo-600 shadow-sm transition-all";
+                linkBtn.className = "flex-1 py-2 text-sm font-bold rounded-lg text-slate-500 hover:text-slate-700 transition-all";
+                fileGroup.classList.remove('hidden');
+                linkGroup.classList.add('hidden');
+            } else {
+                linkBtn.className = "flex-1 py-2 text-sm font-bold rounded-lg bg-white text-indigo-600 shadow-sm transition-all";
+                fileBtn.className = "flex-1 py-2 text-sm font-bold rounded-lg text-slate-500 hover:text-slate-700 transition-all";
+                linkGroup.remove('hidden');
+                fileGroup.classList.add('hidden');
+            }
+        };
+
+        window.handleFileSelect = (input) => {
+            if (input.files && input.files[0]) {
+                document.getElementById('file-name-display').textContent = input.files[0].name;
+                const title = document.getElementById('title-input');
+                if (!title.value) title.value = input.files[0].name;
+            }
+        };
+
+        // --- PREVIEW MODAL FUNCTIONS ---
+        window.previewItem = (id) => {
+            const item = allItems.find(i => i.id === id);
+            if (!item) {
+                return window.showToast("Error: Could not find item to preview.", "error");
+            }
+            window.showPreview(item.content, item.title, item.file_type); // Note: file_type
+        };
+
+       window.showPreview = (content, title, fileType) => {
+            const modal = document.getElementById('preview-modal');
+            const titleEl = document.getElementById('preview-title');
+            const contentEl = document.getElementById('preview-content-area');
+
+            titleEl.textContent = escapeHtml(title);
+            contentEl.innerHTML = ''; 
+            contentEl.scrollTop = 0; 
+
+            if (fileType && fileType.startsWith('image/')) {
+                contentEl.className = "p-4 flex-1 overflow-auto bg-slate-100 flex items-center justify-center";
+                const img = document.createElement('img');
+                img.src = content;
+                img.className = "max-w-full max-h-full object-contain rounded-lg";
+                contentEl.appendChild(img);
+
+            } else if (fileType === 'application/pdf' || (typeof content === 'string' && content.startsWith('data:application/pdf'))) {
+                contentEl.className = "p-4 flex-1 overflow-auto bg-slate-100 block";
+                const wrapper = document.createElement('div');
+                wrapper.className = "w-full flex flex-col items-center gap-4";
+                contentEl.appendChild(wrapper);
+
+                let pdfUrl = content;
+                if (typeof content === 'string' && content.startsWith('data:')) {
+                    const blob = dataURIToBlob(content);
+                    pdfUrl = URL.createObjectURL(blob);
+                }
+
+                const downloadBtn = document.createElement('div');
+                downloadBtn.className = "w-full text-center mb-2";
+                downloadBtn.innerHTML = `
+                    <a href="${pdfUrl}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-800 text-white text-xs font-bold shadow active:scale-95 transition-transform" download="${title}.pdf">
+                        <i class="fa-solid fa-download"></i> Download Original
+                    </a>
+                `;
+                wrapper.appendChild(downloadBtn);
+
+                const loadingTask = pdfjsLib.getDocument(pdfUrl);
+                loadingTask.promise.then(function(pdf) {
+                    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                        const canvas = document.createElement('canvas');
+                        canvas.className = "w-full h-auto border border-slate-200 rounded-lg shadow-sm bg-white mb-2";
+                        canvas.id = `pdf-page-${pageNum}`;
+                        wrapper.appendChild(canvas); 
+
+                        pdf.getPage(pageNum).then(function(page) {
+                            const scale = 1.5; 
+                            const viewport = page.getViewport({scale: scale});
+                            const context = canvas.getContext('2d');
+                            
+                            canvas.height = viewport.height;
+                            canvas.width = viewport.width;
+
+                            const renderContext = {
+                                canvasContext: context,
+                                viewport: viewport
+                            };
+                            page.render(renderContext);
+                        });
+                    }
+                }, function (reason) {
+                    console.error(reason);
+                    wrapper.innerHTML += `<p class="text-red-500 text-sm mt-4">Could not render PDF. Please use the download button.</p>`;
+                });
+
+                if (pdfUrl && pdfUrl.startsWith('blob:')) {
+                    wrapper.dataset.blobUrl = pdfUrl;
+                }
+            } else {
+                contentEl.className = "p-4 flex-1 overflow-auto bg-slate-100 flex items-center justify-center";
+                contentEl.innerHTML = '<p class="text-slate-500">Preview is not available for this file type.</p>';
+            }
+
+            modal.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('#preview-modal-content').classList.remove('scale-95');
+                modal.querySelector('#preview-modal-content').classList.add('scale-100');
+            });
+        };
+        
+        window.hidePreview = () => {
+            const modal = document.getElementById('preview-modal');
+            modal.classList.add('opacity-0');
+            modal.querySelector('#preview-modal-content').classList.remove('scale-100');
+            modal.querySelector('#preview-modal-content').classList.add('scale-95');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                const contentEl = document.getElementById('preview-content-area');
+                const blobWrapper = contentEl.querySelector('[data-blob-url]');
+                if (blobWrapper && blobWrapper.dataset.blobUrl) {
+                    URL.revokeObjectURL(blobWrapper.dataset.blobUrl);
+                }
+                const iframe = contentEl.querySelector('iframe');
+                if (iframe && iframe.src && iframe.src.startsWith('blob:')) {
+                    URL.revokeObjectURL(iframe.src);
+                }
+                contentEl.innerHTML = ''; 
+            }, 200);
+        };
+
+        window.showToast = (msg, type = 'neutral') => {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bg = type === 'error' ? 'bg-red-500' : (type === 'success' ? 'bg-emerald-500' : 'bg-slate-800');
+            toast.className = `${bg} text-white px-4 py-3 rounded-xl shadow-xl text-sm font-medium flex items-center gap-3 transform translate-x-full transition-all duration-300 pointer-events-auto backdrop-blur-md bg-opacity-90`;
+            toast.innerHTML = `<i class="fa-solid ${type === 'error' ? 'fa-circle-exclamation' : 'fa-check-circle'}"></i> <span>${msg}</span>`;
+            container.appendChild(toast);
+            
+            requestAnimationFrame(() => toast.classList.remove('translate-x-full'));
+            setTimeout(() => {
+                toast.classList.add('translate-x-full', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        };
+
+        // --- All Files Page Functions ---
+        function renderAllFiles(items, filter = '') {
+            const tbody = document.getElementById('all-files-tbody');
+            const filterText = filter.toLowerCase();
+            
+            const filteredItems = items.filter(item => 
+                item.title.toLowerCase().includes(filterText)
+            );
+
+            if (filteredItems.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="p-6 text-center text-slate-500">
+                            <i class="fa-solid ${filter ? 'fa-search' : 'fa-wind'} text-2xl mb-2"></i>
+                            <p>${filter ? 'No files match your search.' : 'It\'s quiet here. No files uploaded yet.'}</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = ''; 
+
+            filteredItems.forEach(data => {
+                // FIXED: Changed uploaderId to uploader_id and uid to id
+                const isOwner = currentUser && data.uploader_id === currentUser.id;
+                
+                let iconClass = 'fa-file';
+                let iconBg = 'bg-indigo-100 text-indigo-600';
+                
+                if (data.type === 'link') {
+                    iconClass = 'fa-link';
+                    iconBg = 'bg-emerald-100 text-emerald-600';
+                } else if (data.file_type && data.file_type.includes('image')) {
+                    iconClass = 'fa-image';
+                    iconBg = 'bg-pink-100 text-pink-600';
+                } else if (data.file_type && data.file_type.includes('pdf')) {
+                    iconClass = 'fa-file-pdf';
+                    iconBg = 'bg-red-100 text-red-600';
+                } else if (data.file_type && (data.file_type.includes('word') || data.file_type.includes('document'))) {
+                    iconClass = 'fa-file-word';
+                    iconBg = 'bg-blue-100 text-blue-600';
+                }
+
+                // FIXED: Supabase dates are ISO strings
+                const dateStr = data.created_at ? new Date(data.created_at).toLocaleDateString() : 'N/A';
+                
+                let previewButtonHtml = '';
+                if (data.type === 'file' && data.file_type && (data.file_type.startsWith('image/') || data.file_type === 'application/pdf')) {
+                    previewButtonHtml = `
+                        <button onclick="window.previewItem('${data.id}')" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-blue-600 rounded-lg transition-colors" title="Preview">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    `;
+                }
+
+                const el = document.createElement('tr');
+                el.className = "border-b border-slate-100 hover:bg-slate-50 transition-colors";
+                el.innerHTML = `
+                    <td class="p-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg ${iconBg} flex items-center justify-center flex-shrink-0 shadow-sm">
+                                <i class="fa-solid ${iconClass} text-base"></i>
+                            </div>
+                            <div>
+                                <div class="font-bold text-slate-800 truncate" style="max-width: 20rem;">${escapeHtml(data.title)}</div>
+                                <div class="text-xs text-slate-500 hidden sm:block truncate" style="max-width: 20rem;">${data.file_name || 'Web Link'}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="p-4 text-sm text-slate-600 hidden md:table-cell">
+                        <span class="bg-slate-100 px-2 py-0.5 rounded uppercase font-bold tracking-wider text-[10px] text-slate-600">${data.type}</span>
+                    </td>
+                    <td class="p-4 text-sm text-slate-600 hidden sm:table-cell">${dateStr}</td>
+                    <td class="p-4">
+                        <div class="flex items-center justify-end gap-1">
+                            ${previewButtonHtml} 
+                            <a href="${data.content}" target="_blank" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-indigo-600 rounded-lg transition-colors" title="${data.type === 'link' ? 'Open Link' : 'Open/Download File'}">
+                                <i class="fa-solid ${data.type === 'link' ? 'fa-arrow-up-right-from-square' : 'fa-download'}"></i>
+                            </a>
+                            ${isOwner ? `
+                                <button onclick="window.deleteItem('${data.id}', '${data.file_name || ''}')" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-500 rounded-lg transition-colors" title="Delete">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(el);
+            });
+        }
+
+        window.filterAllFiles = () => {
+            const filterText = document.getElementById('search-input').value;
+            renderAllFiles(allItems, filterText);
+        };
+
+        // ==========================================
+        // MAIN APP LOGIC
+        // ==========================================
+
+        async function initApp() {
+            if (isLocalMode) {
+                console.warn("Running in Local Mode (No Firebase Config)");
+                currentUser = localUser;
+                updateStatus(true, currentUser.id, true);
+                loadLocalData();
+            } else {
+                try {
+                    // Sign in anonymously with Supabase
+                    const { data, error } = await supabase.auth.signInAnonymously();
+            
+                    if (error) throw error;
+ 
+                    if (data.user) {
+                        currentUser = data.user;
+                        // Note: Supabase uses user.id, not user.uid
+                        updateStatus(true, currentUser.id, false); 
+                        startOnlineListener();
+                    } else {
+                        updateStatus(false);
+                    }
+                 } catch (err) {
+                    console.error("Init failed:", err);
+                    window.showToast("Connection failed. Switching to Local Mode.", "error");
+                    currentUser = localUser;
+                    updateStatus(true, currentUser.id, true);
+                    loadLocalData();
+                }
+            }
+        }
+
+        // --- UPLOAD HANDLER ---
+        window.executeUpload = async () => {
+            const btn = document.getElementById('btn-submit');
+            const title = document.getElementById('title-input').value;
+            
+            if (!title) return window.showToast("Please add a title", "error");
+
+            btn.disabled = true;
+            btn.innerHTML = `<div class="loader"></div>`;
+
+            try {
+               let contentUrl = '', fileName = '', fileType = 'link';
+
+               if (currentUploadType === 'file') {
+                   const file = document.getElementById('file-input').files[0];
+                   if (!file) throw new Error("No file selected");
+                   
+                   // NEW: Increased limit to 5MB (5 * 1024 * 1024)
+                   if (file.size > 5 * 1024 * 1024) throw new Error("File too large (>5MB)"); 
+                
+                   fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`; // Clean filename
+                   fileType = file.type;
+         
+                   // 1. Upload physical file to Supabase Storage Bucket
+                   const { data: uploadData, error: uploadError } = await supabase
+                     .storage
+                     .from('academic-files')
+                     .upload(fileName, file);
+
+                   if (uploadError) throw uploadError;
+
+                   // 2. Get the public URL for the file we just uploaded
+                   const { data: publicUrlData } = supabase
+                     .storage
+                     .from('academic-files')
+                     .getPublicUrl(fileName);
+                    
+                   contentUrl = publicUrlData.publicUrl;
+
+               } else {
+                   const url = document.getElementById('link-input').value;
+                   if (!url) throw new Error("No URL entered");
+                   contentUrl = url.startsWith('http') ? url : 'https://' + url;
+               }
+
+               const newDoc = {
+                   type: currentUploadType,
+                   title: title,
+                   content: contentUrl, 
+                   file_name: fileName,
+                   file_type: fileType,
+                   uploader_id: currentUser.id
+               };
+
+                 // 3. Save the details to the Supabase Database
+                  if (isLocalMode) {
+                    saveToLocalStorage(newDoc);
+                    loadLocalData();
+                 } else {
+                  const { error: dbError } = await supabase
+                  .from('files')
+                  .insert([newDoc]);
+
+                 if (dbError) throw dbError;
+                }
+
+                 window.showToast("Saved successfully!", "success");
+                 window.hideUploadModal();
+                 window.showPage('home'); // Go back to home after upload
+                 
+                document.getElementById('title-input').value = '';
+                document.getElementById('link-input').value = '';
+                document.getElementById('file-input').value = '';
+                document.getElementById('file-name-display').textContent = 'Tap to browse';
+
+            } catch (err) {
+              console.error(err);
+              window.showToast(err.message, "error");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<span>Upload Item</span> <i class="fa-solid fa-paper-plane text-xs"></i>`;
+            }
+        };
+
+        // --- DELETE HANDLER FIXED ---
+        window.deleteItem = async (id, fileName) => {
+            if(!confirm("Are you sure you want to delete this item?")) return;
+            
+            if (isLocalMode) {
+                deleteFromLocalStorage(id);
+                loadLocalData();
+                window.showToast("Item deleted");
+            } else {
+                try {
+                    // 1. Delete from Supabase Database
+                    const { error: dbError } = await supabase.from('files').delete().eq('id', id);
+                    if (dbError) throw dbError;
+
+                    // 2. Delete from Supabase Storage (if it's a file, not a link)
+                    if (fileName && fileName !== 'undefined') {
+                        await supabase.storage.from('academic-files').remove([fileName]);
+                    }
+
+                    window.showToast("Item deleted");
+                } catch(err) {
+                    console.error("Delete failed:", err.message);
+                    window.showToast("Delete failed. Not authorized.", "error");
+                }
+            }
+        };
+
+        // --- DATA LISTENERS ---
+        function renderFeed(items) {
+            const feed = document.getElementById('feed');
+            const countEl = document.getElementById('item-count');
+            countEl.textContent = `${items.length} Items`;
+
+            if (items.length === 0) {
+                feed.innerHTML = `
+                    <div class="bg-white p-8 rounded-2xl text-center text-slate-500 shadow-sm">
+                        <i class="fa-solid fa-wind text-3xl mb-3 opacity-50"></i>
+                        <p>It's quiet here. Be the first to share.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            feed.innerHTML = '';
+            items.forEach(data => {
+                // FIXED: uploader_id and currentUser.id
+                const isOwner = currentUser && data.uploader_id === currentUser.id;
+                
+                let iconClass = 'fa-file';
+                let iconBg = 'bg-indigo-100 text-indigo-600';
+                if (data.type === 'link') {
+                    iconClass = 'fa-link';
+                    iconBg = 'bg-emerald-100 text-emerald-600';
+                } else if (data.file_type && data.file_type.includes('image')) {
+                    iconClass = 'fa-image';
+                    iconBg = 'bg-pink-100 text-pink-600';
+                } else if (data.file_type && data.file_type.includes('pdf')) {
+                    iconClass = 'fa-file-pdf';
+                    iconBg = 'bg-red-100 text-red-600';
+                }
+
+                // FIXED: Supabase dates
+                const dateStr = data.created_at ? new Date(data.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : 'Just now';
+
+                let previewButtonHtml = '';
+                if (data.type === 'file' && data.file_type && (data.file_type.startsWith('image/') || data.file_type === 'application/pdf')) {
+                    previewButtonHtml = `
+                        <button onclick="window.previewItem('${data.id}')" class="inline-flex items-center gap-2 text-xs font-bold text-slate-600 bg-white border border-slate-200 px-3 py-2 rounded-lg hover:border-blue-400 hover:text-blue-600 transition-colors shadow-sm" title="Preview">
+                            Preview <i class="fa-solid fa-eye"></i>
+                        </button>
+                    `;
+                }
+
+                const el = document.createElement('div');
+                el.className = "bg-white p-4 rounded-2xl flex items-start gap-4 card-enter group shadow-sm hover:shadow-md transition-shadow";
+                el.innerHTML = `
+                    <div class="w-12 h-12 rounded-xl ${iconBg} flex items-center justify-center flex-shrink-0 shadow-sm">
+                        <i class="fa-solid ${iconClass} text-lg"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex justify-between items-start">
+                            <h4 class="font-bold text-slate-800 truncate pr-2">${escapeHtml(data.title)}</h4>
+                            ${isOwner ? `
+                                <button onclick="window.deleteItem('${data.id}', '${data.file_name || ''}')" class="text-slate-400 hover:text-red-500 transition-colors px-2">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                        <p class="text-xs text-slate-500 mb-3 flex gap-2 items-center">
+                            <span class="bg-slate-100 px-1.5 rounded uppercase font-bold tracking-wider text-[10px] text-slate-600">${data.type}</span>
+                            <span>${dateStr}</span>
+                        </p>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <a href="${data.content}" target="_blank" download="${data.file_name || 'file'}" class="inline-flex items-center gap-2 text-xs font-bold text-slate-600 bg-white border border-slate-200 px-3 py-2 rounded-lg hover:border-indigo-400 hover:text-indigo-600 transition-colors shadow-sm">
+                                ${data.type === 'link' ? 'Open Link' : 'Download File'} <i class="fa-solid ${data.type === 'link' ? 'fa-arrow-up-right-from-square' : 'fa-download'}"></i>
+                            </a>
+                            ${previewButtonHtml}
+                        </div>
+                    </div>
+                `;
+                feed.appendChild(el);
+            });
+        }
+
+        // --- ONLINE MODE ---
+        async function startOnlineListener() {
+            // 1. Fetch the initial data
+            const { data: files, error } = await supabase
+              .from('files')
+              .select('*')
+              .order('created_at', { ascending: false });
+        
+            if (!error && files) {
+                allItems = files;
+                renderFeed(files);
+                renderAllFiles(files, document.getElementById('search-input').value);
+            }
+
+            // 2. Listen for new uploads or deletes in real-time 
+            supabase
+                .channel('public:files')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'files' }, payload => {
+                    startOnlineListener(); 
+                })
+                .subscribe();
+        }
+
+        // --- LOCAL MODE HELPER ---
+        function loadLocalData() {
+            const raw = localStorage.getItem('auraDropData');
+            const items = raw ? JSON.parse(raw) : [];
+            allItems = items; 
+            renderFeed(items);
+            renderAllFiles(items);
+        }
+
+        function saveToLocalStorage(item) {
+            const raw = localStorage.getItem('auraDropData');
+            const items = raw ? JSON.parse(raw) : [];
+            item.id = 'local-' + Date.now();
+            items.unshift(item); 
+            localStorage.setItem('auraDropData', JSON.stringify(items));
+        }
+
+        function deleteFromLocalStorage(id) {
+            const raw = localStorage.getItem('auraDropData');
+            let items = raw ? JSON.parse(raw) : [];
+            items = items.filter(i => i.id !== id);
+            localStorage.setItem('auraDropData', JSON.stringify(items));
+        }
+
+        // --- UTILS ------
+        function dataURIToBlob(dataURI) {
+            const splitDataURI = dataURI.split(',');
+            const byteString = atob(splitDataURI[1]);
+            const mimeString = splitDataURI[0].split(':')[1].split(';')[0];
+            
+            const ab = new ArrayBuffer(byteString.length);
+            const ia = new Uint8Array(ab);
+            for (let i = 0; i < byteString.length; i++) {
+                ia[i] = byteString.charCodeAt(i);
+            }
+            return new Blob([ab], { type: mimeString });
+        }
+
+        function updateStatus(connected, uid, isLocal) {
+            const dot = document.getElementById('status-dot');
+            const ping = document.getElementById('status-ping');
+            const text = document.getElementById('connection-text');
+            const idDisplay = document.getElementById('user-id-display');
+
+            if (isLocal) {
+                dot.className = "relative inline-flex rounded-full h-2 w-2 bg-amber-500";
+                ping.classList.add('hidden');
+                text.textContent = "Local Mode";
+                text.className = "font-medium text-amber-500";
+                idDisplay.textContent = "Offline";
+            } else if (connected) {
+                dot.className = "relative inline-flex rounded-full h-2 w-2 bg-emerald-400";
+                ping.classList.remove('hidden');
+                text.textContent = "Online";
+                text.className = "font-medium text-emerald-400";
+                idDisplay.textContent = uid.slice(0, 5);
+            } else {
+                dot.className = "relative inline-flex rounded-full h-2 w-2 bg-red-500";
+                ping.classList.add('hidden');
+                text.textContent = "Offline";
+                text.className = "font-medium text-red-400";
+                idDisplay.textContent = "...";
+            }
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        // Start
+        initApp();
+    </script>
+</body>
+
+</html>
