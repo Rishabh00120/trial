@@ -1067,12 +1067,14 @@
         }
 
         // --- ONLINE MODE ---
+        // --- ONLINE MODE ---
         async function startOnlineListener() {
             // 1. Fetch the initial data
             const { data: files, error } = await supabase
               .from('files')
               .select('*')
-              .order('created_at', { ascending: false });
+              .order('is_pinned', { ascending: false }) // NEW: Pinned posts at the top!
+              .order('created_at', { ascending: false }); // Then newest first
         
             if (!error && files) {
                 allItems = files;
@@ -1166,6 +1168,7 @@
 
 
 </html>
+
 
 
 
