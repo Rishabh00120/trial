@@ -838,14 +838,25 @@
                 loadLocalData();
             } else {
                 try {
-                    // Sign in anonymously with Supabase
-                    const { data, error } = await supabase.auth.signInAnonymously();
-            
-                    if (error) throw error;
+                    // 1. Check if the browser ALREADY has a saved session
+                    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+                    
+                    if (sessionError) throw sessionError;
+
+                    let user = null;
+
+                    if (session && session.user) {
+                        // 2. Welcome back! Use the existing ID
+                        user = session.user;
+                    } else {
+                        // 3. First time here? Create a brand new anonymous ID
+                        const { data, error: signInError } = await supabase.auth.signInAnonymously();
+                        if (signInError) throw signInError;
+                        user = data.user;
+                    }
  
-                    if (data.user) {
-                        currentUser = data.user;
-                        // Note: Supabase uses user.id, not user.uid
+                    if (user) {
+                        currentUser = user;
                         updateStatus(true, currentUser.id, false); 
                         startOnlineListener();
                     } else {
@@ -860,7 +871,6 @@
                 }
             }
         }
-
         // --- UPLOAD HANDLER ---
         window.executeUpload = async () => {
             const btn = document.getElementById('btn-submit');
@@ -1149,3 +1159,4 @@
 
 
 </html>
+
