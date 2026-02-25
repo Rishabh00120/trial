@@ -990,6 +990,7 @@
         };
 
         // --- DATA LISTENERS ---
+        // --- DATA LISTENERS ---
         function renderFeed(items) {
             const feed = document.getElementById('feed');
             const countEl = document.getElementById('item-count');
@@ -1035,8 +1036,13 @@
                     `;
                 }
 
+                // NEW: Determine if it is pinned to change styles
+                const cardBgClass = data.is_pinned ? 'bg-amber-50/80 border border-amber-200 shadow-md' : 'bg-white border border-transparent shadow-sm';
+                const pinBadgeHtml = data.is_pinned ? `<span class="bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider text-[10px]"><i class="fa-solid fa-thumbtack mr-1"></i> Pinned</span>` : '';
+
                 const el = document.createElement('div');
-                el.className = "bg-white p-4 rounded-2xl flex items-start gap-4 card-enter group shadow-sm hover:shadow-md transition-shadow";
+                // Updated class name to use the dynamic background
+                el.className = `p-4 rounded-2xl flex items-start gap-4 card-enter group hover:shadow-md transition-all ${cardBgClass}`;
                 el.innerHTML = `
                     <div class="w-12 h-12 rounded-xl ${iconBg} flex items-center justify-center flex-shrink-0 shadow-sm">
                         <i class="fa-solid ${iconClass} text-lg"></i>
@@ -1051,6 +1057,7 @@
                             ` : ''}
                         </div>
                         <p class="text-xs text-slate-500 mb-3 flex gap-2 items-center">
+                            ${pinBadgeHtml} 
                             <span class="bg-slate-100 px-1.5 rounded uppercase font-bold tracking-wider text-[10px] text-slate-600">${data.type}</span>
                             <span>${dateStr}</span>
                         </p>
@@ -1168,6 +1175,7 @@
 
 
 </html>
+
 
 
 
