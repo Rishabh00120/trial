@@ -488,13 +488,20 @@
         </div>
     </div>
    <script type="module">
-        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-        // Paste your actual URL and Anon Key here
         const supabaseUrl = 'https://sdyzkofabmolggoylvov.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkeXprb2ZhYm1vbGdnb3lsdm92Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwMTIzMzYsImV4cCI6MjA4NzU4ODMzNn0.uJPEZGnKAKDvmOfYmty80GiQgR6aWwiNO6sg1dvJ0J8'; // DOUBLE CHECK THIS KEY!
-        const supabase = createClient(supabaseUrl, supabaseKey);
-
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkeXprb2ZhYm1vbGdnb3lsdm92Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwMTIzMzYsImV4cCI6MjA4NzU4ODMzNn0.uJPEZGnKAKDvmOfYmty80GiQgR6aWwiNO6sg1dvJ0J8';
+        
+        // ADDED: Configuration to force session persistence
+        const supabase = createClient(supabaseUrl, supabaseKey, {
+            auth: {
+                persistSession: true,
+                autoRefreshToken: true,
+                storage: window.localStorage
+            }
+        });
+	   
         const canvasConfig = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
         const canvasAppId = typeof __app_id !== 'undefined' ? __app_id : 'default-app';
         const activeConfig = canvasConfig ? JSON.parse(canvasConfig) : null;
@@ -1159,4 +1166,5 @@
 
 
 </html>
+
 
