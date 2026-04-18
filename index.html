@@ -5,125 +5,82 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AuraDrop</title>
     <script src="https://cdn.tailwindcss.com"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script>
-        // Initialize the PDF worker immediately
+        tailwind.config = { darkMode: 'class', theme: { extend: {} } }
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+        
+        // Safely attach PDF.js to window globally
         const pdfjsLib = window['pdfjs-dist/build/pdf'];
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        if (pdfjsLib) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            window.pdfjsLib = pdfjsLib;
+        }
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        body { 
-            font-family: 'Outfit', sans-serif; 
-            background-color: #f1f5f9; /* Light gray background */
-            color: #1e293b;
-        }
-        
-        .loader {
-            border: 2px solid rgba(255,255,255,0.3);
-            border-top: 2px solid #fff;
-            border-radius: 50%;
-            width: 16px;
-            height: 16px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        body { font-family: 'Outfit', sans-serif; transition: background-color 0.3s ease, color 0.3s ease; }
         .card-enter { animation: slideUp 0.4s ease-out forwards; }
-        
-        .btn-gradient {
-            background-image: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-            transition: all 0.2s ease;
-        }
-        .btn-gradient:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-        }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .btn-gradient { background-image: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); transition: all 0.2s ease; }
+        .btn-gradient:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); }
         .btn-gradient:active { transform: translateY(0); }
-
         ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #e2e8f0; }
+        ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #64748b; }
-
-        .privacy-content h2 {
-            font-size: 1.5rem; 
-            font-weight: 700; 
-            margin-top: 1.5rem; 
-            margin-bottom: 0.5rem; 
-            color: #1e293b; 
-        }
-        .privacy-content h3 {
-            font-size: 1.25rem; 
-            font-weight: 600; 
-            margin-top: 1rem; 
-            margin-bottom: 0.5rem; 
-            color: #334155; 
-        }
-        .privacy-content p {
-            margin-bottom: 1rem; 
-            line-height: 1.625; 
-            color: #475569; 
-        }
-        .privacy-content ul {
-            list-style-type: disc;
-            margin-left: 1.5rem; 
-            margin-bottom: 1rem; 
-            color: #475569; 
-        }
-        .privacy-content strong {
-            color: #334155; 
-        }
+        .privacy-content h2 { font-size: 1.5rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+        .privacy-content h3 { font-size: 1.25rem; font-weight: 600; margin-top: 1rem; margin-bottom: 0.5rem; }
+        .privacy-content p { margin-bottom: 1rem; line-height: 1.625; }
+        .privacy-content ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 1rem; }
     </style>
 </head>
-<body class="h-screen flex flex-row overflow-hidden antialiased">
+<body class="h-screen flex flex-row overflow-hidden antialiased bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-slate-100">
 
-    <aside id="sidebar" class="w-64 bg-slate-900 text-slate-300 flex flex-col z-40 h-full fixed md:relative transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
-        
-        <div class="flex items-center gap-3 p-5 border-b border-slate-700">
-            <div class="bg-gradient-to-br from-indigo-500 to-violet-600 text-white w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                <i class="fa-solid fa-cloud-arrow-down text-lg"></i>
+    <aside id="sidebar" class="w-64 bg-slate-900 dark:bg-slate-950 text-slate-300 flex flex-col z-40 h-full fixed md:relative transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out border-r border-slate-800 flex-shrink-0">
+        <div class="flex items-center justify-between p-5 border-b border-slate-800">
+            <div class="flex items-center gap-3">
+                <div class="bg-gradient-to-br from-indigo-500 to-violet-600 text-white w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                    <i class="fa-solid fa-cloud-arrow-down text-lg"></i>
+                </div>
+                <h1 class="font-bold text-xl tracking-tight text-white">Aura<span class="text-violet-300 font-normal">Drop</span></h1>
             </div>
-            <h1 class="font-bold text-xl tracking-tight text-white">Aura<span class="text-violet-300 font-normal">Drop</span></h1>
-        </div>
-
-        <nav id="sidebar-nav" class="flex-1 p-4 space-y-2">
-            <a href="javascript:void(0)" onclick="window.showPage('home')" id="nav-home" class="flex items-center gap-3 px-4 py-2.5 rounded-lg bg-indigo-600 text-white font-medium">
-                <i class="fa-solid fa-house w-5 text-center"></i>
-                <span>Home</span>
-            </a>
-            <a href="javascript:void(0)" onclick="window.showPage('all-files')" id="nav-all-files" class="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-slate-800 transition-colors">
-                <i class="fa-solid fa-folder w-5 text-center"></i>
-                <span>All Files</span>
-            </a>
-			<a href="javascript:void(0)" onclick="window.showPage('about')" id="nav-about" class="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-slate-800 transition-colors">
-                <i class="fa-solid fa-info-circle w-5 text-center"></i>
-                <span>About</span>
-            </a>
-			<a href="javascript:void(0)" onclick="window.showPage('terms')" id="nav-terms" class="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-slate-800 transition-colors">
-                <i class="fa-solid fa-file-contract w-5 text-center"></i>
-                <span>Terms of Use</span>
-            </a>
-            <a href="javascript:void(0)" onclick="window.showPage('privacy')" id="nav-privacy" class="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-slate-800 transition-colors">
-                <i class="fa-solid fa-shield-halved w-5 text-center"></i>
-                <span>Privacy Policy</span>
-            </a>
-        </nav>
-
-        <div class="p-4 border-t border-slate-700">
-            <button onclick="window.showUploadModal()" class="w-full btn-gradient text-white text-sm font-bold px-5 py-3 rounded-xl flex items-center justify-center gap-2 shadow-md">
-                <i class="fa-solid fa-plus"></i>
-                <span>Create New Upload</span>
+            <button onclick="window.toggleDarkMode()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition-colors shadow-inner" title="Toggle Dark Mode">
+                <i class="fa-solid fa-moon dark:hidden"></i><i class="fa-solid fa-sun hidden dark:block text-amber-300"></i>
             </button>
         </div>
 
-        <footer class="p-4 border-t border-slate-700 space-y-3">
+        <nav id="sidebar-nav" class="flex-1 p-4 space-y-2 overflow-y-auto">
+            <a href="javascript:void(0)" onclick="window.showPage('home')" id="nav-home" class="flex items-center gap-3 px-4 py-2.5 rounded-lg bg-indigo-600 text-white font-medium">
+                <i class="fa-solid fa-house w-5 text-center"></i><span>Home</span>
+            </a>
+            <a href="javascript:void(0)" onclick="window.showPage('all-files')" id="nav-all-files" class="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-slate-800 transition-colors">
+                <i class="fa-solid fa-folder w-5 text-center"></i><span>All Files</span>
+            </a>
+            <a href="javascript:void(0)" onclick="window.showPage('about')" id="nav-about" class="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-slate-800 transition-colors">
+                <i class="fa-solid fa-info-circle w-5 text-center"></i><span>About</span>
+            </a>
+            <a href="javascript:void(0)" onclick="window.showPage('terms')" id="nav-terms" class="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-slate-800 transition-colors">
+                <i class="fa-solid fa-file-contract w-5 text-center"></i><span>Terms of Use</span>
+            </a>
+            <a href="javascript:void(0)" onclick="window.showPage('privacy')" id="nav-privacy" class="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-slate-800 transition-colors">
+                <i class="fa-solid fa-shield-halved w-5 text-center"></i><span>Privacy Policy</span>
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-slate-800">
+            <button onclick="window.showUploadModal()" class="w-full btn-gradient text-white text-sm font-bold px-5 py-3 rounded-xl flex items-center justify-center gap-2 shadow-md">
+                <i class="fa-solid fa-plus"></i><span>Create New Upload</span>
+            </button>
+        </div>
+
+        <footer class="p-4 border-t border-slate-800 space-y-3">
             <div class="bg-slate-800 px-4 py-2 rounded-full flex items-center justify-between gap-3 text-xs shadow-lg">
                 <div class="flex items-center gap-2">
                     <span class="relative flex h-2 w-2">
@@ -140,330 +97,315 @@
 
     <div id="sidebar-overlay" onclick="window.toggleSidebar()" class="fixed inset-0 bg-black/60 z-30 hidden md:hidden"></div>
 
-    <div class="flex-1 flex flex-col h-full overflow-hidden">
+    <div class="flex-1 flex flex-col h-full overflow-hidden relative">
         
         <div id="page-home" class="flex flex-col h-full">
-            <header class="bg-white border-b border-slate-200 p-4 flex justify-between items-center z-20 flex-shrink-0">
+            <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-4 flex justify-between items-center z-20 flex-shrink-0 transition-colors">
                 <div class="flex items-center gap-3">
-                    <button id="menu-toggle" onclick="window.toggleSidebar()" class="md:hidden text-slate-600 hover:text-slate-900 p-2 rounded-lg">
+                    <button onclick="window.toggleSidebar()" class="md:hidden text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white p-2 rounded-lg">
                         <i class="fa-solid fa-bars text-xl"></i>
                     </button>
-                    
                     <div>
-                        <h2 class="text-xl font-bold text-slate-900">Live Feed</h2>
-                        <p class="text-slate-600 text-sm">Only owners can delete</p>
+                        <h2 class="text-xl font-bold">Live Feed</h2>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm" id="feed-subtitle">Showing all recent uploads</p>
                     </div>
                 </div>
                 
-                <div class="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-xs font-mono font-medium" id="item-count">Loading...</div>
+                <div class="flex items-center gap-3">
+                    <select id="feed-sort" onchange="window.triggerRender()" class="bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-sm rounded-lg px-3 py-1.5 outline-none focus:ring-2 focus:ring-indigo-50 cursor-pointer">
+                        <option value="newest">Newest First</option>
+                        <option value="top">Top Upvoted</option>
+                        <option value="downloads">Most Downloaded</option>
+                    </select>
+                    <div class="bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-3 py-1.5 rounded-lg text-xs font-mono font-medium hidden sm:block" id="item-count">0 Items</div>
+                </div>
             </header>
 
             <main class="flex-1 relative overflow-y-auto">
-                
                 <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-                    <div class="absolute -top-20 -left-20 w-96 h-96 bg-indigo-200/50 rounded-full blur-3xl opacity-60"></div>
-                    <div class="absolute bottom-0 right-0 w-96 h-96 bg-pink-200/50 rounded-full blur-3xl opacity-60"></div>
+                    <div class="absolute -top-20 -left-20 w-96 h-96 bg-indigo-200/50 dark:bg-indigo-900/20 rounded-full blur-3xl opacity-60"></div>
+                    <div class="absolute bottom-0 right-0 w-96 h-96 bg-pink-200/50 dark:bg-pink-900/20 rounded-full blur-3xl opacity-60"></div>
                 </div>
 
-                <div id="feed" class="w-full max-w-5xl mx-auto p-6 pb-20 space-y-4 z-10 relative">
-                    <div class="bg-white/80 backdrop-blur-sm p-6 rounded-2xl animate-pulse shadow-sm">
-                        <div class="h-12 w-12 bg-slate-200 rounded-xl mb-4"></div>
-                        <div class="h-4 w-3/4 bg-slate-200 rounded mb-2"></div>
-                        <div class="h-4 w-1/2 bg-slate-200 rounded"></div>
+                <div class="w-full max-w-5xl mx-auto p-4 sm:p-6 z-10 relative">
+                    <div class="mb-6 pb-4 border-b border-slate-200 dark:border-slate-800">
+                        <h3 class="text-sm font-bold text-slate-500 dark:text-slate-400 mb-3 uppercase tracking-wider">Filter by Tags</h3>
+                        <div id="tags-cloud" class="flex flex-wrap gap-2">
+                            <span class="text-sm text-slate-400">Loading tags...</span>
+                        </div>
+                    </div>
+
+                    <div id="feed" class="space-y-4">
+                        </div>
+                    
+                    <div id="feed-load-more-container" class="mt-8 mb-20 text-center hidden">
+                        <button onclick="window.loadMoreFeed()" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-bold py-2.5 px-6 rounded-xl shadow-sm hover:shadow transition-all active:scale-95">
+                            Load More Results <i class="fa-solid fa-angle-down ml-1"></i>
+                        </button>
                     </div>
                 </div>
             </main>
         </div>
 
-        <div id="page-all-files" class="hidden flex flex-col overflow-hidden">
-            <header class="bg-white border-b border-slate-200 p-4 flex justify-between items-center z-20 flex-shrink-0">
+        <div id="page-all-files" class="hidden flex flex-col h-full">
+            <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-4 flex flex-col sm:flex-row sm:justify-between items-start sm:items-center gap-4 z-20 flex-shrink-0 transition-colors">
                 <div class="flex items-center gap-3">
-                    <button onclick="window.toggleSidebar()" class="md:hidden text-slate-600 hover:text-slate-900 p-2 rounded-lg">
+                    <button onclick="window.toggleSidebar()" class="md:hidden text-slate-600 dark:text-slate-400 p-2 rounded-lg">
                         <i class="fa-solid fa-bars text-xl"></i>
                     </button>
-                    
                     <div>
-                        <h2 class="text-xl font-bold text-slate-900">All Files</h2>
-                        <p class="text-slate-600 text-sm">Browse and search all uploads</p>
+                        <h2 class="text-xl font-bold">All Files</h2>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm hidden sm:block">Browse and search all uploads</p>
                     </div>
                 </div>
-                
-                <div class="w-full max-w-xs">
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fa-solid fa-search text-slate-400"></i>
-                        </div>
-                        <input type="text" id="search-input" onkeyup="window.filterAllFiles()" placeholder="Search by title..." class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-100 border border-transparent focus:bg-white focus:border-indigo-300 focus:ring-2 focus:ring-indigo-200 outline-none text-sm transition-all">
+                <div class="flex w-full sm:w-auto items-center gap-2">
+                     <select id="table-sort" onchange="window.triggerRender()" class="bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-sm rounded-lg px-3 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
+                        <option value="newest">Newest First</option>
+                        <option value="top">Top Upvoted</option>
+                        <option value="downloads">Most Downloaded</option>
+                    </select>
+                    <div class="relative flex-1 sm:w-64">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-search text-slate-400"></i></div>
+                        <input type="text" id="search-input" onkeyup="window.triggerRender()" placeholder="Search by title or tag..." class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 border border-transparent dark:text-white focus:bg-white focus:border-indigo-300 focus:ring-2 focus:ring-indigo-200 dark:focus:ring-indigo-900 outline-none text-sm transition-all">
                     </div>
                 </div>
             </header>
 
-            <main class="flex-1 relative overflow-y-auto p-6 pb-20">
-                <div class="bg-white w-full max-w-7xl mx-auto rounded-2xl shadow-sm overflow-x-auto">
+            <main class="flex-1 relative overflow-y-auto p-4 sm:p-6 pb-20">
+                <div class="bg-white dark:bg-slate-800 w-full max-w-7xl mx-auto rounded-2xl shadow-sm overflow-x-auto border border-transparent dark:border-slate-700">
                     <table class="w-full text-left" id="all-files-table">
-                        <thead class="border-b border-slate-200 bg-slate-50">
+                        <thead class="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
                             <tr>
-                                <th class="p-4 text-sm font-semibold text-slate-600">Name</th>
-                                <th class="p-4 text-sm font-semibold text-slate-600 hidden md:table-cell">Type</th>
-                                <th class="p-4 text-sm font-semibold text-slate-600 hidden sm:table-cell">Date</th>
-                                <th class="p-4 text-sm font-semibold text-slate-600 min-w-[120px]"></th> </tr>
+                                <th class="p-4 text-sm font-semibold text-slate-600 dark:text-slate-300">Name & Tags</th>
+                                <th class="p-4 text-sm font-semibold text-slate-600 dark:text-slate-300 hidden md:table-cell">Stats</th>
+                                <th class="p-4 text-sm font-semibold text-slate-600 dark:text-slate-300 hidden sm:table-cell">Date / Size</th>
+                                <th class="p-4 text-sm font-semibold text-slate-600 dark:text-slate-300 min-w-[150px]">Actions</th> 
+                            </tr>
                         </thead>
                         <tbody id="all-files-tbody">
-                            <tr>
-                                <td colspan="4" class="p-6 text-center text-slate-500">
-                                    <i class="fa-solid fa-spinner fa-spin text-2xl"></i>
-                                    <p>Loading files...</p>
-                                </td>
-                            </tr>
-                        </tbody>
+                            </tbody>
                     </table>
+                </div>
+                <div id="table-load-more-container" class="mt-6 text-center hidden">
+                    <button onclick="window.loadMoreTable()" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-bold py-2 px-6 rounded-xl shadow-sm hover:shadow transition-all active:scale-95 text-sm">
+                        Show More Files <i class="fa-solid fa-angle-down ml-1"></i>
+                    </button>
                 </div>
             </main>
         </div>
 
         <div id="page-privacy" class="hidden flex flex-col h-full">
-             <header class="bg-white border-b border-slate-200 p-4 flex justify-between items-center z-20 flex-shrink-0">
+             <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-4 flex justify-between items-center z-20 flex-shrink-0 transition-colors">
                 <div class="flex items-center gap-3">
-                    <button onclick="window.toggleSidebar()" class="md:hidden text-slate-600 hover:text-slate-900 p-2 rounded-lg">
+                    <button onclick="window.toggleSidebar()" class="md:hidden text-slate-600 dark:text-slate-400 p-2 rounded-lg">
                         <i class="fa-solid fa-bars text-xl"></i>
                     </button>
-                    <div>
-                        <h2 class="text-xl font-bold text-slate-900">Privacy Policy</h2>
-                        <p class="text-slate-600 text-sm">Last updated: Nov 13, 2025</p>
+                     <div>
+                        <h2 class="text-xl font-bold text-slate-900 dark:text-white">Privacy Policy</h2>
+                        <p class="text-slate-600 dark:text-slate-400 text-sm">Last updated: Nov 13, 2025</p>
                     </div>
                 </div>
             </header>
-
             <main class="flex-1 relative overflow-y-auto p-6 md:p-10">
-                <div class="bg-white w-full max-w-4xl mx-auto p-8 md:p-12 rounded-2xl shadow-sm privacy-content">
-				    <h1 class="text-3xl font-bold mb-6 text-slate-900">Privacy Policy</h1>
-                    <h2 class="!mt-0">Introduction</h2>
-                    <p>Welcome to AuraDrop. This application is a demonstration project. This Privacy Policy explains how we handle your information when you use our service.</p>
-                    <p>By using this service, you agree to the collection and use of information in accordance with this policy. <strong>Do not upload any sensitive, private, or confidential information.</strong></p>
+                <div class="bg-white dark:bg-slate-800 w-full max-w-4xl mx-auto p-8 md:p-12 rounded-2xl shadow-sm privacy-content border border-transparent dark:border-slate-700">
+                    <h1 class="text-3xl font-bold mb-6 text-slate-900 dark:text-white">Privacy Policy</h1>
+                    <h2 class="!mt-0 dark:text-slate-200">Introduction</h2>
+                    <p class="dark:text-slate-300">Welcome to AuraDrop. This application is a demonstration project. This Privacy Policy explains how we handle your information when you use our service.</p>
+                    <p class="dark:text-slate-300">By using this service, you agree to the collection and use of information in accordance with this policy. <strong class="dark:text-white">Do not upload any sensitive, private, or confidential information.</strong></p>
 
-                    <h2>Information We Collect</h2>
-                    <p>We collect two types of information:</p>
-                    <h3>1. Anonymous User ID</h3>
-                    <p>When you first visit the site, our backend provider (Supabase) assigns you a unique, anonymous user ID. This ID is stored in your browser's local storage. It is not linked to your name, email, or any other personal information. We use this ID solely to distinguish your uploads from those of other users.</p>
-                    <h3>2. User-Uploaded Content</h3>
-                    <p>We collect and store the content you explicitly upload, which includes:</p>
-                    <ul>
-                        <li><strong>Files:</strong> The file itself (up to 500KB), which is stored as a Base64 text string.</li>
-                        <li><strong>Links:</strong> The URL you provide.</li>
-                        <li><strong>Title:</strong> The title or description you add to your upload.</li>
+                    <h2 class="dark:text-slate-200">Information We Collect</h2>
+                    <p class="dark:text-slate-300">We collect two types of information:</p>
+                    
+                    <h3 class="dark:text-slate-200">1. Anonymous User ID</h3>
+                    <p class="dark:text-slate-300">When you first visit the site, our backend provider (Supabase) assigns you a unique, anonymous user ID. This ID is stored in your browser's local storage. It is not linked to your name, email, or any other personal information. We use this ID solely to distinguish your uploads from those of other users.</p>
+                    
+                    <h3 class="dark:text-slate-200">2. User-Uploaded Content</h3>
+                    <p class="dark:text-slate-300">We collect and store the content you explicitly upload, which includes:</p>
+                    <ul class="dark:text-slate-300">
+                        <li><strong class="dark:text-white">Files:</strong> The file itself (up to 5MB), which is stored securely in cloud storage.</li>
+                        <li><strong class="dark:text-white">Links:</strong> The URL you provide.</li>
+                        <li><strong class="dark:text-white">Title & Tags:</strong> The title or tags you add to your upload.</li>
                     </ul>
 
-                    <h2>How We Use and Share Information</h2>
-                    <p>Your information is used for the following purposes:</p>
-                    <ul>
-                        <li><strong>To Provide the Service:</strong> To display the files and links you upload in the "Live Feed."</li>
-                        <li><strong>To Enable Deletion:</strong> To identify which files you "own" so that we can show you the delete button for those items.</li>
+                    <h2 class="dark:text-slate-200">How We Use and Share Information</h2>
+                    <p class="dark:text-slate-300">Your information is used for the following purposes:</p>
+                    <ul class="dark:text-slate-300">
+                        <li><strong class="dark:text-white">To Provide the Service:</strong> To display the files and links you upload in the "Live Feed."</li>
+                        <li><strong class="dark:text-white">To Enable Deletion:</strong> To identify which files you "own" so that we can show you the delete button for those items.</li>
                     </ul>
-                    <p><strong>All content you upload is publicly visible.</strong> Anyone with a link to this web application can see, access, and download the files and links you post.</p>
+                    <p class="dark:text-slate-300"><strong class="dark:text-white">All content you upload is publicly visible.</strong> Anyone with a link to this web application can see, access, and download the files and links you post.</p>
 
-                    <h2>Data Security and Deletion</h2>
-                    <p>We have implemented security rules in our database to ensure that only the user with the matching anonymous ID can delete their own content. While the "Delete" button is hidden from other users, these backend rules provide an extra layer of security to prevent unauthorized deletion.</p>
-                    <p>However, please be aware that:</p>
-                    <ul>
-                        <li>If you clear your browser's cache or use a different device, you will be assigned a new anonymous ID and will **lose the ability** to delete your previously uploaded files.</li>
+                    <h2 class="dark:text-slate-200">Data Security and Deletion</h2>
+                    <p class="dark:text-slate-300">We have implemented security rules in our database to ensure that only the user with the matching anonymous ID can delete their own content. While the "Delete" button is hidden from other users, these backend rules provide an extra layer of security to prevent unauthorized deletion.</p>
+                    <p class="dark:text-slate-300">However, please be aware that:</p>
+                    <ul class="dark:text-slate-300">
+                        <li>If you clear your browser's cache or use a different device, you will be assigned a new anonymous ID and will <strong class="dark:text-white">lose the ability</strong> to delete your previously uploaded files.</li>
                         <li>This application is a demonstration and runs on "Test Mode" rules. We make no guarantees about the permanent security or availability of your data.</li>
                     </ul>
 
-                    <h2>Changes to This Policy</h2>
-                    <p>We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new policy on this page.</p>
+                    <h2 class="dark:text-slate-200">Changes to This Policy</h2>
+                    <p class="dark:text-slate-300">We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new policy on this page.</p>
                 </div>
             </main>
         </div>
 
         <div id="page-terms" class="hidden flex flex-col h-full">
-             <header class="bg-white border-b border-slate-200 p-4 flex justify-between items-center z-20 flex-shrink-0">
+             <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-4 flex justify-between items-center z-20 flex-shrink-0 transition-colors">
                 <div class="flex items-center gap-3">
-                    <button onclick="window.toggleSidebar()" class="md:hidden text-slate-600 hover:text-slate-900 p-2 rounded-lg">
+                    <button onclick="window.toggleSidebar()" class="md:hidden text-slate-600 dark:text-slate-400 p-2 rounded-lg">
                         <i class="fa-solid fa-bars text-xl"></i>
                     </button>
                     <div>
-                        <h2 class="text-xl font-bold text-slate-900">Terms of Use</h2>
-                        <p class="text-slate-600 text-sm">Last updated: Nov 13, 2025</p>
+                        <h2 class="text-xl font-bold text-slate-900 dark:text-white">Terms of Use</h2>
+                        <p class="text-slate-600 dark:text-slate-400 text-sm">Last updated: Nov 13, 2025</p>
                     </div>
                 </div>
             </header>
-
             <main class="flex-1 relative overflow-y-auto p-6 md:p-10">
-                <div class="bg-white w-full max-w-4xl mx-auto p-8 md:p-12 rounded-2xl shadow-sm privacy-content">
-				    <h1 class="text-3xl font-bold mb-6 text-slate-900">Terms Of Use</h1>
-                    <h3 class="!mt-0">1. Purpose of AuraDrop</h3>
-                    <p>AuraDrop is an online platform created exclusively for academic use, including:</p>
-                    <ul>
+                <div class="bg-white dark:bg-slate-800 w-full max-w-4xl mx-auto p-8 md:p-12 rounded-2xl shadow-sm privacy-content border border-transparent dark:border-slate-700">
+                    <h1 class="text-3xl font-bold mb-6 text-slate-900 dark:text-white">Terms Of Use</h1>
+                    
+                    <h3 class="!mt-0 dark:text-slate-200">1. Purpose of AuraDrop</h3>
+                    <p class="dark:text-slate-300">AuraDrop is an online platform created exclusively for academic use, including:</p>
+                    <ul class="dark:text-slate-300">
                         <li>Uploading notes</li>
                         <li>Sharing assignments</li>
                         <li>Submitting project files</li>
                         <li>Accessing class-related materials</li>
                     </ul>
-                    <p>AuraDrop should not be used for entertainment content, personal storage, or any non-academic activity.</p>
+                    <p class="dark:text-slate-300">AuraDrop should not be used for entertainment content, personal storage, or any non-academic activity.</p>
                     
-                    <h3>2. Acceptable Use</h3>
-                    <p>You agree to use AuraDrop responsibly and legally. You may not upload, share, or store:</p>
-                    <ul>
+                    <h3 class="dark:text-slate-200">2. Acceptable Use</h3>
+                    <p class="dark:text-slate-300">You agree to use AuraDrop responsibly and legally. You may not upload, share, or store:</p>
+                    <ul class="dark:text-slate-300">
                         <li>Inappropriate, harmful, or offensive content</li>
                         <li>Copyrighted media (movies, songs, games, software)</li>
                         <li>Malware, hacking tools, or suspicious files</li>
                         <li>Personal identification documents (ID cards, certificates, etc.)</li>
                         <li>Any content unrelated to studies</li>
                     </ul>
-                    <p>We reserve the right to remove any file or account that violates these rules.</p>
+                    <p class="dark:text-slate-300">We reserve the right to remove any file or account that violates these rules.</p>
                     
-                    <h3>3. User Responsibilities</h3>
-                    <p>By using AuraDrop, you agree to:</p>
-                    <ul>
+                    <h3 class="dark:text-slate-200">3. User Responsibilities</h3>
+                    <p class="dark:text-slate-300">By using AuraDrop, you agree to:</p>
+                    <ul class="dark:text-slate-300">
                         <li>Upload only academic and safe content</li>
                         <li>Respect other users’ privacy and files</li>
                         <li>Avoid attempting to bypass security or misuse features</li>
                         <li>Not share login credentials with others</li>
                         <li>Report suspicious files or activities if noticed</li>
                     </ul>
-                    <p>You are responsible for all content uploaded from your account.</p>
-                    
-                    <h3>4. Privacy & Data</h3>
-                    <p>AuraDrop collects minimal data necessary for platform operation, such as:</p>
-                    <ul>
-                        <li>File names and metadata</li>
-                        <li>Basic account/login details</li>
-                    </ul>
-                    <p>Files uploaded to AuraDrop may be removed automatically after inactivity or violation of rules.</p>
-                    
-                    <h3>5. Content Ownership</h3>
-                    <p>You retain ownership of files you upload. However, by uploading them to AuraDrop, you grant us permission to:</p>
-                    <ul>
-                        <li>Store the files on our server</li>
-                        <li>Display them to users you have chosen to share them with</li>
-                        <li>Delete them if they violate policies or after your account is removed</li>
-                    </ul>
-                    <p>We do not claim rights over your academic content.</p>
-                    
-                    <h3>6. Prohibited Actions</h3>
-                    <p>You are strictly prohibited from:</p>
-                    <ul>
-                        <li>Uploading illegal, harmful, or offensive content</li>
-                        <li>Using bots, scripts, or automated tools to access the platform</li>
-                        <li>Interfering with website security or performance</li>
-                        <li>Attempting to gain unauthorized access to another user’s files</li>
-                        <li>Using AuraDrop for harassment, cheating, or plagiarism</li>
-                    </ul>
-                    <p>Violations may lead to immediate account suspension or permanent ban.</p>
-                    
-                    <h3>7. Service Availability</h3>
-                    <p>AuraDrop aims to provide stable and continuous service, but we cannot guarantee:</p>
-                    <ul>
-                        <li>24/7 uptime</li>
-                        <li>No data loss</li>
-                        <li>Perfect storage reliability</li>
-                    </ul>
-                    <p>Backup your important files separately. AuraDrop is meant as a convenience tool, not permanent storage.</p>
-                    
-                    <h3>8. Account Termination</h3>
-                    <p>We may suspend or terminate accounts that:</p>
-                    <ul>
-                        <li>Upload banned or harmful content</li>
-                        <li>Repeatedly violate usage rules</li>
-                        <li>Engage in security breaches</li>
-                        <li>Misuse the platform for non-academic purposes</li>
-                    </ul>
-                    <p>Users may also request account deletion by contacting support.</p>
-                    
-                    <h3>9. Changes to These Terms</h3>
-                    <p>AuraDrop may update these Terms of Use at any time.</p>
-                    <p>You will be informed of major changes, and continued use of the website means you accept the updated terms.</p>
+                    <p class="dark:text-slate-300">You are responsible for all content uploaded from your account.</p>
+
+                    <h3 class="dark:text-slate-200">4. Privacy & Data</h3>
+                    <p class="dark:text-slate-300">AuraDrop collects minimal data necessary for platform operation, such as file names and metadata. Files uploaded to AuraDrop may be removed automatically after inactivity or violation of rules.</p>
+
+                    <h3 class="dark:text-slate-200">5. Content Ownership</h3>
+                    <p class="dark:text-slate-300">You retain ownership of files you upload. However, by uploading them, you grant us permission to store the files, display them to users, and delete them if they violate policies. We do not claim rights over your academic content.</p>
+
+                    <h3 class="dark:text-slate-200">6. Prohibited Actions</h3>
+                    <p class="dark:text-slate-300">You are strictly prohibited from uploading illegal content, using bots to access the platform, interfering with website security, attempting to gain unauthorized access to another user’s files, or using AuraDrop for harassment, cheating, or plagiarism. Violations may lead to immediate account suspension.</p>
+
+                    <h3 class="dark:text-slate-200">7. Service Availability</h3>
+                    <p class="dark:text-slate-300">AuraDrop aims to provide stable and continuous service, but we cannot guarantee 24/7 uptime, no data loss, or perfect storage reliability. Backup your important files separately.</p>
+
+                    <h3 class="dark:text-slate-200">8. Changes to These Terms</h3>
+                    <p class="dark:text-slate-300">AuraDrop may update these Terms of Use at any time. Continued use of the website means you accept the updated terms.</p>
                 </div>
             </main>
         </div>
 
         <div id="page-about" class="hidden flex flex-col h-full">
-             <header class="bg-white border-b border-slate-200 p-4 flex justify-between items-center z-20 flex-shrink-0">
+             <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-4 flex justify-between items-center z-20 flex-shrink-0 transition-colors">
                 <div class="flex items-center gap-3">
-                    <button onclick="window.toggleSidebar()" class="md:hidden text-slate-600 hover:text-slate-900 p-2 rounded-lg">
+                    <button onclick="window.toggleSidebar()" class="md:hidden text-slate-600 dark:text-slate-400 p-2 rounded-lg">
                         <i class="fa-solid fa-bars text-xl"></i>
                     </button>
                     <div>
-                        <h2 class="text-xl font-bold text-slate-900">About AuraDrop</h2>
-                        <p class="text-slate-600 text-sm">A student file sharing platform.</p>
+                        <h2 class="text-xl font-bold text-slate-900 dark:text-white">About AuraDrop</h2>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm">A student file sharing platform.</p>
                     </div>
                 </div>
             </header>
-
             <main class="flex-1 relative overflow-y-auto p-6 md:p-10">
-                <div class="bg-white w-full max-w-4xl mx-auto p-8 md:p-12 rounded-2xl shadow-sm privacy-content">
-				    <h1 class="text-3xl font-bold mb-6 text-slate-900">About AuraDrop</h1>
-                    <p class="!mt-0">AuraDrop is a modern cloud platform built especially for students. Our goal is simple: to make sharing notes, assignments, and academic files fast, secure, and effortless.</p>
-                    <p>We understand how challenging it can be to manage class materials, organize projects, or exchange notes with classmates. AuraDrop was created to solve that problem — giving students a clean, reliable space to upload, store, and share study-related documents from any device.</p>
+                <div class="bg-white dark:bg-slate-800 w-full max-w-4xl mx-auto p-8 md:p-12 rounded-2xl shadow-sm privacy-content border border-transparent dark:border-slate-700">
+                    <h1 class="text-3xl font-bold mb-6 text-slate-900 dark:text-white">About AuraDrop</h1>
+                    <p class="!mt-0 dark:text-slate-300">AuraDrop is a modern cloud platform built especially for students. Our goal is simple: to make sharing notes, assignments, and academic files fast, secure, and effortless.</p>
+                    <p class="dark:text-slate-300">We understand how challenging it can be to manage class materials, organize projects, or exchange notes with classmates. AuraDrop was created to solve that problem — giving students a clean, reliable space to upload, store, and share study-related documents from any device.</p>
                     
-                    <h3>Our Mission</h3>
-                    <p>To help students learn better by providing a safe, clutter-free platform dedicated entirely to academic file sharing.</p>
+                    <h3 class="dark:text-slate-200">Our Mission</h3>
+                    <p class="dark:text-slate-300">To help students learn better by providing a safe, clutter-free platform dedicated entirely to academic file sharing.</p>
                     
-                    <h3>What AuraDrop Offers</h3>
-                    <ul>
+                    <h3 class="dark:text-slate-200">What AuraDrop Offers</h3>
+                    <ul class="dark:text-slate-300">
                         <li>Easy upload and download of study materials</li>
                         <li>Simple sharing options for classmates</li>
                         <li>Secure storage for your academic work</li>
                         <li>A dedicated space only for notes, assignments, and projects</li>
                         <li>Fast, responsive design for quick access</li>
                     </ul>
-                    <p>AuraDrop is built with a student-first mindset, keeping the interface simple and the experience smooth.</p>
-                    
-                    <h3>Our Values</h3>
-                    <p>We believe in:</p>
-                    <ul>
-                        <li>Clean and responsible content</li>
-                        <li>Safe and respectful usage</li>
-                        <li>A distraction-free learning environment</li>
-                        <li>A platform that supports productivity, not misuse</li>
-                    </ul>
-                    <p>AuraDrop is not meant for entertainment files, illegal uploads, or non-academic content — our focus stays strictly on learning.</p>
-                    
-                    <h3>Our Promise</h3>
-                    <p>We are committed to improving AuraDrop continuously, adding features that support students while maintaining a safe, reliable, and easy-to-use platform.</p>
-                    <p>Together, let’s build a better way to study, share, and succeed.</p>
+                    <p class="dark:text-slate-300">AuraDrop is built with a student-first mindset, keeping the interface simple and the experience smooth.</p>
+
+                    <h3 class="dark:text-slate-200">Our Values</h3>
+                    <p class="dark:text-slate-300">We believe in clean and responsible content, safe and respectful usage, a distraction-free learning environment, and a platform that supports productivity, not misuse. AuraDrop is not meant for entertainment files, illegal uploads, or non-academic content — our focus stays strictly on learning.</p>
+
+                    <h3 class="dark:text-slate-200">Our Promise</h3>
+                    <p class="dark:text-slate-300">We are committed to improving AuraDrop continuously, adding features that support students while maintaining a safe, reliable, and easy-to-use platform. Together, let’s build a better way to study, share, and succeed.</p>
                 </div>
             </main>
         </div>
-
-
     </div>
-
 
     <button onclick="window.showUploadModal()" class="md:hidden fixed bottom-6 right-6 w-14 h-14 btn-gradient rounded-full flex items-center justify-center text-white shadow-lg z-50 transform transition-all hover:scale-105 active:scale-100">
         <i class="fa-solid fa-plus text-xl"></i>
     </button>
+
     <div id="upload-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4 transition-opacity opacity-0">
-        <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl transform scale-95 transition-all duration-200 overflow-hidden" id="modal-content">
-            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                <h3 class="font-bold text-slate-800 text-lg">New Upload</h3>
-                <button onclick="window.hideUploadModal()" class="w-8 h-8 rounded-full bg-white hover:bg-slate-100 text-slate-400 flex items-center justify-center transition-colors">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-md rounded-3xl shadow-2xl transform scale-95 transition-all duration-200 overflow-hidden border border-transparent dark:border-slate-700" id="modal-content">
+            <div class="p-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
+                <h3 class="font-bold text-lg dark:text-white">New Upload</h3>
+                <button onclick="window.hideUploadModal()" class="w-8 h-8 rounded-full bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-400 dark:text-slate-300 flex items-center justify-center transition-colors">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
             
             <div class="p-6 space-y-5">
-                <div class="flex bg-slate-100 p-1 rounded-xl">
-                    <button onclick="window.setUploadType('file')" id="btn-type-file" class="flex-1 py-2 text-sm font-bold rounded-lg bg-white text-indigo-600 shadow-sm transition-all">File</button>
-                    <button onclick="window.setUploadType('link')" id="btn-type-link" class="flex-1 py-2 text-sm font-bold rounded-lg text-slate-500 hover:text-slate-700 transition-all">Link</button>
+                <div class="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-xl">
+                    <button onclick="window.setUploadType('file')" id="btn-type-file" class="flex-1 py-2 text-sm font-bold rounded-lg bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm transition-all">File</button>
+                    <button onclick="window.setUploadType('link')" id="btn-type-link" class="flex-1 py-2 text-sm font-bold rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-all">Link</button>
                 </div>
 
                 <div id="input-group-file">
-                    <label class="block border-2 border-dashed border-indigo-100 bg-indigo-50/30 hover:bg-indigo-50 rounded-2xl h-32 flex flex-col items-center justify-center cursor-pointer transition-colors group">
+                    <label class="block border-2 border-dashed border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/30 dark:bg-indigo-900/10 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-2xl h-32 flex flex-col items-center justify-center cursor-pointer transition-colors group">
                         <input type="file" id="file-input" class="hidden" onchange="window.handleFileSelect(this)">
-                        <i class="fa-solid fa-cloud-arrow-up text-2xl text-indigo-400 mb-2 group-hover:scale-110 transition-transform"></i>
-                        <span id="file-name-display" class="text-sm font-medium text-indigo-900">Tap to browse</span>
-                        <span class="text-xs text-indigo-400 mt-1">Max 5MB</span>
+                        <i class="fa-solid fa-cloud-arrow-up text-2xl text-indigo-400 dark:text-indigo-500 mb-2 group-hover:scale-110 transition-transform"></i>
+                        <span id="file-name-display" class="text-sm font-medium text-indigo-900 dark:text-indigo-300">Tap to browse</span>
+                        <span class="text-xs text-indigo-400 dark:text-indigo-600 mt-1">Max 5MB</span>
                     </label>
                 </div>
 
                 <div id="input-group-link" class="hidden">
-                    <input type="url" id="link-input" placeholder="https://example.com" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus-outline-none focus:ring-2 focus:ring-indigo-500/50 text-sm">
+                    <input type="url" id="link-input" placeholder="https://example.com" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-sm dark:text-white">
                 </div>
 
-                <input type="text" id="title-input" placeholder="Title or Description..." class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus-outline-none focus:ring-2 focus:ring-indigo-500/50 text-sm">
+                <input type="text" id="title-input" placeholder="Title or Description..." class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-sm dark:text-white">
                 
-                <button onclick="window.executeUpload()" id="btn-submit" class="w-full btn-gradient text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-200 flex justify-center items-center gap-2">
+                <div class="space-y-1">
+                    <input type="text" id="tags-input" placeholder="Add tags (comma separated, e.g. Math, Chapter 1)" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-sm dark:text-white">
+                    <p class="text-xs text-slate-400 px-2">Helps students find your notes easier.</p>
+                </div>
+                
+                <div id="upload-progress-container" class="hidden space-y-2">
+                    <div class="flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
+                        <span id="upload-status-text">Uploading to secure storage...</span>
+                        <span id="upload-percent">0%</span>
+                    </div>
+                    <div class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
+                        <div id="upload-progress-bar" class="bg-indigo-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <button onclick="window.executeUpload()" id="btn-submit" class="w-full btn-gradient text-white font-bold py-3 rounded-xl shadow-lg flex justify-center items-center gap-2">
                     <span>Upload Item</span>
                     <i class="fa-solid fa-paper-plane text-xs"></i>
                 </button>
@@ -474,97 +416,81 @@
     <div id="toast-container" class="fixed top-24 right-6 z-[70] flex flex-col gap-2 w-full max-w-xs pointer-events-none"></div>
 
     <div id="preview-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4 transition-opacity opacity-0" onclick="window.hidePreview()">
-        <div class="bg-white w-full max-w-4xl max-h-[90vh] rounded-3xl shadow-2xl transform scale-95 transition-all duration-200 overflow-hidden flex flex-col" id="preview-modal-content" onclick="event.stopPropagation()">
-            <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 flex-shrink-0">
-                <h3 id="preview-title" class="font-bold text-slate-800 text-lg truncate pr-4">Preview</h3>
-                <button onclick="window.hidePreview()" class="w-8 h-8 rounded-full bg-white hover:bg-slate-100 text-slate-400 flex items-center justify-center transition-colors flex-shrink-0">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-4xl max-h-[90vh] rounded-3xl shadow-2xl transform scale-95 transition-all duration-200 overflow-hidden flex flex-col border border-transparent dark:border-slate-700" id="preview-modal-content" onclick="event.stopPropagation()">
+            <div class="p-5 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50 flex-shrink-0">
+                <h3 id="preview-title" class="font-bold text-lg truncate pr-4 dark:text-white">Preview</h3>
+                <button onclick="window.hidePreview()" class="w-8 h-8 rounded-full bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-400 dark:text-slate-300 flex items-center justify-center transition-colors flex-shrink-0">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
-            
-            <div id="preview-content-area" class="p-4 flex-1 overflow-auto bg-slate-100 flex items-center justify-center">
-                <p class="text-slate-500">Loading preview...</p>
-            </div>
+            <div id="preview-content-area" class="p-4 flex-1 overflow-auto bg-slate-100 dark:bg-slate-900 flex items-center justify-center"></div>
         </div>
     </div>
+
    <script type="module">
-     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
         const supabaseUrl = 'https://sdyzkofabmolggoylvov.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkeXprb2ZhYm1vbGdnb3lsdm92Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwMTIzMzYsImV4cCI6MjA4NzU4ODMzNn0.uJPEZGnKAKDvmOfYmty80GiQgR6aWwiNO6sg1dvJ0J8';
         
-        // ADDED: Configuration to force session persistence
         const supabase = createClient(supabaseUrl, supabaseKey, {
-            auth: {
-                persistSession: true,
-                autoRefreshToken: true,
-                storage: window.localStorage
-            }
+            auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage }
         });
-	   
-        const canvasConfig = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
-        const canvasAppId = typeof __app_id !== 'undefined' ? __app_id : 'default-app';
-        const activeConfig = canvasConfig ? JSON.parse(canvasConfig) : null;
-        const isLocalMode = false; // Forced to false so it uses Supabase
-
-        // ==========================================
-        // UI STATE & FUNCTIONS
-        // ==========================================
-
+        
         let currentUploadType = 'file';
         let currentUser;
-        let allItems = []; // For search filtering
+        let allItems = []; 
+        let activeTagFilter = null; 
+        let feedLimit = 15;
+        let tableLimit = 15;
 
-        let localUser = { id: 'local-user-' + Math.floor(Math.random()*1000), isAnonymous: true };
+        // --- THEME ---
+        window.toggleDarkMode = () => {
+            const html = document.documentElement;
+            html.classList.toggle('dark');
+            localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
+        };
 
-        // --- Page Routing ---
+        // --- ROUTING ---
         const pages = ['home', 'all-files', 'privacy', 'terms', 'about'];
         const navLinks = ['nav-home', 'nav-all-files', 'nav-privacy', 'nav-terms', 'nav-about'];
 
         window.showPage = (pageId) => {
             pages.forEach(id => document.getElementById(`page-${id}`).classList.add('hidden'));
             document.getElementById(`page-${pageId}`).classList.remove('hidden');
-
             navLinks.forEach(id => {
                 const link = document.getElementById(id);
-                link.classList.remove('bg-indigo-600', 'text-white', 'font-medium');
-                link.classList.add('hover:bg-slate-800', 'transition-colors');
+                if(link) {
+                    link.classList.remove('bg-indigo-600', 'text-white', 'font-medium');
+                    link.classList.add('hover:bg-slate-800', 'transition-colors');
+                }
             });
-
-            if (pageId === 'home') {
-                document.getElementById('nav-home').classList.add('bg-indigo-600', 'text-white', 'font-medium');
-            } else if (pageId === 'all-files') {
-                document.getElementById('nav-all-files').classList.add('bg-indigo-600', 'text-white', 'font-medium');
-            } else if (pageId === 'privacy') {
-                 document.getElementById('nav-privacy').classList.add('bg-indigo-600', 'text-white', 'font-medium');
-            } else if (pageId === 'terms') {
-                 document.getElementById('nav-terms').classList.add('bg-indigo-600', 'text-white', 'font-medium');
-            } else if (pageId === 'about') {
-                 document.getElementById('nav-about').classList.add('bg-indigo-600', 'text-white', 'font-medium');
+            const activeLink = document.getElementById(`nav-${pageId}`);
+            if(activeLink) {
+                activeLink.classList.add('bg-indigo-600', 'text-white', 'font-medium');
             }
-            window.closeSidebarIfMobile();
-        };
-
-        // --- Sidebar Toggle Functions ---
-        window.toggleSidebar = () => {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebar-overlay');
-            sidebar.classList.toggle('-translate-x-full');
-            overlay.classList.toggle('hidden');
-        };
-
-        window.closeSidebarIfMobile = () => {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebar-overlay');
+            
+            if(pageId === 'home') feedLimit = 15;
+            if(pageId === 'all-files') tableLimit = 15;
+            window.triggerRender();
+            
             if (window.innerWidth < 768) { 
-                sidebar.classList.add('-translate-x-full');
-                overlay.classList.add('hidden');
+                document.getElementById('sidebar').classList.add('-translate-x-full');
+                document.getElementById('sidebar-overlay').classList.add('hidden');
             }
         };
 
-        // --- Modal Functions ---
+        window.toggleSidebar = () => {
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+            document.getElementById('sidebar-overlay').classList.toggle('hidden');
+        };
+
+        // --- MODAL ---
         window.showUploadModal = () => {
-            window.closeSidebarIfMobile(); 
+            if (window.innerWidth < 768) { 
+                document.getElementById('sidebar').classList.add('-translate-x-full');
+                document.getElementById('sidebar-overlay').classList.add('hidden');
+            }
             const modal = document.getElementById('upload-modal');
             modal.classList.remove('hidden');
             requestAnimationFrame(() => {
@@ -579,27 +505,19 @@
             modal.classList.add('opacity-0');
             modal.querySelector('#modal-content').classList.remove('scale-100');
             modal.querySelector('#modal-content').classList.add('scale-95');
-            setTimeout(() => modal.classList.add('hidden'), 200);
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                document.getElementById('upload-progress-container').classList.add('hidden');
+            }, 200);
         };
 
         window.setUploadType = (type) => {
             currentUploadType = type;
-            const fileBtn = document.getElementById('btn-type-file');
-            const linkBtn = document.getElementById('btn-type-link');
-            const fileGroup = document.getElementById('input-group-file');
-            const linkGroup = document.getElementById('input-group-link');
-
-            if (type === 'file') {
-                fileBtn.className = "flex-1 py-2 text-sm font-bold rounded-lg bg-white text-indigo-600 shadow-sm transition-all";
-                linkBtn.className = "flex-1 py-2 text-sm font-bold rounded-lg text-slate-500 hover:text-slate-700 transition-all";
-                fileGroup.classList.remove('hidden');
-                linkGroup.classList.add('hidden');
-            } else {
-                linkBtn.className = "flex-1 py-2 text-sm font-bold rounded-lg bg-white text-indigo-600 shadow-sm transition-all";
-                fileBtn.className = "flex-1 py-2 text-sm font-bold rounded-lg text-slate-500 hover:text-slate-700 transition-all";
-                linkGroup.remove('hidden');
-                fileGroup.classList.add('hidden');
-            }
+            const isFile = type === 'file';
+            document.getElementById('btn-type-file').className = isFile ? "flex-1 py-2 text-sm font-bold rounded-lg bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm transition-all" : "flex-1 py-2 text-sm font-bold rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-all";
+            document.getElementById('btn-type-link').className = !isFile ? "flex-1 py-2 text-sm font-bold rounded-lg bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm transition-all" : "flex-1 py-2 text-sm font-bold rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-all";
+            document.getElementById('input-group-file').classList.toggle('hidden', !isFile);
+            document.getElementById('input-group-link').classList.toggle('hidden', isFile);
         };
 
         window.handleFileSelect = (input) => {
@@ -610,217 +528,266 @@
             }
         };
 
-        // --- PREVIEW MODAL FUNCTIONS ---
-        window.previewItem = (id) => {
-            const item = allItems.find(i => i.id === id);
-            if (!item) {
-                return window.showToast("Error: Could not find item to preview.", "error");
-            }
-            window.showPreview(item.content, item.title, item.file_type); // Note: file_type
+        // --- ACTIONS ---
+        window.upvoteItem = async (id, currentUpvotes) => {
+            if(localStorage.getItem(`upvoted_${id}`)) return window.showToast("You already upvoted this.", "neutral");
+            localStorage.setItem(`upvoted_${id}`, 'true');
+            const newCount = (currentUpvotes || 0) + 1;
+            
+            const btn = document.getElementById(`upvote-text-${id}`);
+            if(btn) btn.textContent = newCount;
+            document.getElementById(`upvote-btn-${id}`).classList.add('text-emerald-500', 'dark:text-emerald-400');
+
+            const { error } = await supabase.from('files').update({ upvotes: newCount }).eq('id', id);
+            if (error) localStorage.removeItem(`upvoted_${id}`); 
         };
 
-       window.showPreview = (content, title, fileType) => {
-            const modal = document.getElementById('preview-modal');
-            const titleEl = document.getElementById('preview-title');
-            const contentEl = document.getElementById('preview-content-area');
+        window.reportItem = async (id, currentReports) => {
+            if(localStorage.getItem(`reported_${id}`)) return window.showToast("Report received. Thank you.", "neutral");
+            if(!confirm("Flag this item for inappropriate content?")) return;
+            localStorage.setItem(`reported_${id}`, 'true');
+            const newCount = (currentReports || 0) + 1;
+            const { error } = await supabase.from('files').update({ reports: newCount }).eq('id', id);
+            if (!error) window.showToast("Item reported successfully.", "success");
+            else localStorage.removeItem(`reported_${id}`);
+        };
 
-            titleEl.textContent = escapeHtml(title);
-            contentEl.innerHTML = ''; 
-            contentEl.scrollTop = 0; 
+        window.incrementDownload = async (id, currentDownloads, url) => {
+            const newCount = (currentDownloads || 0) + 1;
+            supabase.from('files').update({ downloads: newCount }).eq('id', id).then(); 
+        };
 
-            if (fileType && fileType.startsWith('image/')) {
-                contentEl.className = "p-4 flex-1 overflow-auto bg-slate-100 flex items-center justify-center";
-                const img = document.createElement('img');
-                img.src = content;
-                img.className = "max-w-full max-h-full object-contain rounded-lg";
-                contentEl.appendChild(img);
+        window.copyToClipboard = (url) => {
+            navigator.clipboard.writeText(url).then(() => window.showToast("Link copied to clipboard!", "success"));
+        };
 
-            } else if (fileType === 'application/pdf' || (typeof content === 'string' && content.startsWith('data:application/pdf'))) {
-                contentEl.className = "p-4 flex-1 overflow-auto bg-slate-100 block";
-                const wrapper = document.createElement('div');
-                wrapper.className = "w-full flex flex-col items-center gap-4";
-                contentEl.appendChild(wrapper);
+        window.filterByTag = (tag) => {
+            activeTagFilter = activeTagFilter === tag ? null : tag;
+            const titleEl = document.getElementById('feed-subtitle');
+            titleEl.innerHTML = activeTagFilter 
+                ? `Showing files tagged: <span class="font-bold text-indigo-500">${activeTagFilter}</span>` 
+                : 'Showing all recent uploads';
+            feedLimit = 15; 
+            window.triggerRender();
+        };
 
-                let pdfUrl = content;
-                if (typeof content === 'string' && content.startsWith('data:')) {
-                    const blob = dataURIToBlob(content);
-                    pdfUrl = URL.createObjectURL(blob);
-                }
+        window.loadMoreFeed = () => { feedLimit += 15; window.triggerRender(); };
+        window.loadMoreTable = () => { tableLimit += 15; window.triggerRender(); };
 
-                const downloadBtn = document.createElement('div');
-                downloadBtn.className = "w-full text-center mb-2";
-                downloadBtn.innerHTML = `
-                    <a href="${pdfUrl}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-800 text-white text-xs font-bold shadow active:scale-95 transition-transform" download="${title}.pdf">
-                        <i class="fa-solid fa-download"></i> Download Original
-                    </a>
-                `;
-                wrapper.appendChild(downloadBtn);
+        function getProcessedItems(sortValue, filterText = '') {
+            let processed = [...allItems];
 
-                const loadingTask = pdfjsLib.getDocument(pdfUrl);
-                loadingTask.promise.then(function(pdf) {
-                    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-                        const canvas = document.createElement('canvas');
-                        canvas.className = "w-full h-auto border border-slate-200 rounded-lg shadow-sm bg-white mb-2";
-                        canvas.id = `pdf-page-${pageNum}`;
-                        wrapper.appendChild(canvas); 
-
-                        pdf.getPage(pageNum).then(function(page) {
-                            const scale = 1.5; 
-                            const viewport = page.getViewport({scale: scale});
-                            const context = canvas.getContext('2d');
-                            
-                            canvas.height = viewport.height;
-                            canvas.width = viewport.width;
-
-                            const renderContext = {
-                                canvasContext: context,
-                                viewport: viewport
-                            };
-                            page.render(renderContext);
-                        });
-                    }
-                }, function (reason) {
-                    console.error(reason);
-                    wrapper.innerHTML += `<p class="text-red-500 text-sm mt-4">Could not render PDF. Please use the download button.</p>`;
+            if (activeTagFilter) {
+                processed = processed.filter(item => {
+                    if (!item.tags) return false;
+                    return item.tags.toLowerCase().includes(activeTagFilter.toLowerCase());
                 });
-
-                if (pdfUrl && pdfUrl.startsWith('blob:')) {
-                    wrapper.dataset.blobUrl = pdfUrl;
-                }
-            } else {
-                contentEl.className = "p-4 flex-1 overflow-auto bg-slate-100 flex items-center justify-center";
-                contentEl.innerHTML = '<p class="text-slate-500">Preview is not available for this file type.</p>';
             }
 
-            modal.classList.remove('hidden');
-            requestAnimationFrame(() => {
-                modal.classList.remove('opacity-0');
-                modal.querySelector('#preview-modal-content').classList.remove('scale-95');
-                modal.querySelector('#preview-modal-content').classList.add('scale-100');
+            if (filterText) {
+                const ft = filterText.toLowerCase();
+                processed = processed.filter(item => 
+                    (item.title || '').toLowerCase().includes(ft) || ((item.tags || '').toLowerCase().includes(ft))
+                );
+            }
+
+            if (sortValue === 'top') {
+                processed.sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0));
+            } else if (sortValue === 'downloads') {
+                processed.sort((a, b) => (b.downloads || 0) - (a.downloads || 0));
+            } else {
+                processed.sort((a, b) => {
+                    if(a.is_pinned !== b.is_pinned) return a.is_pinned ? -1 : 1;
+                    return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+                });
+            }
+            return processed;
+        }
+
+        window.triggerRender = () => {
+            renderTagsCloud(allItems);
+            const feedSort = document.getElementById('feed-sort').value;
+            renderFeed(getProcessedItems(feedSort));
+            const tableSort = document.getElementById('table-sort').value;
+            const searchText = document.getElementById('search-input').value;
+            renderAllFiles(getProcessedItems(tableSort, searchText));
+        };
+
+        function renderTagsCloud(items) {
+            const container = document.getElementById('tags-cloud');
+            const allTags = new Set();
+            
+            items.forEach(item => {
+                if(item.tags) {
+                    item.tags.split(',').forEach(t => { 
+                        const cleanTag = t.trim(); 
+                        if(cleanTag) allTags.add(cleanTag); 
+                    });
+                }
             });
-        };
-        
-        window.hidePreview = () => {
-            const modal = document.getElementById('preview-modal');
-            modal.classList.add('opacity-0');
-            modal.querySelector('#preview-modal-content').classList.remove('scale-100');
-            modal.querySelector('#preview-modal-content').classList.add('scale-95');
-            
-            setTimeout(() => {
-                modal.classList.add('hidden');
-                const contentEl = document.getElementById('preview-content-area');
-                const blobWrapper = contentEl.querySelector('[data-blob-url]');
-                if (blobWrapper && blobWrapper.dataset.blobUrl) {
-                    URL.revokeObjectURL(blobWrapper.dataset.blobUrl);
-                }
-                const iframe = contentEl.querySelector('iframe');
-                if (iframe && iframe.src && iframe.src.startsWith('blob:')) {
-                    URL.revokeObjectURL(iframe.src);
-                }
-                contentEl.innerHTML = ''; 
-            }, 200);
-        };
 
-        window.showToast = (msg, type = 'neutral') => {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            const bg = type === 'error' ? 'bg-red-500' : (type === 'success' ? 'bg-emerald-500' : 'bg-slate-800');
-            toast.className = `${bg} text-white px-4 py-3 rounded-xl shadow-xl text-sm font-medium flex items-center gap-3 transform translate-x-full transition-all duration-300 pointer-events-auto backdrop-blur-md bg-opacity-90`;
-            toast.innerHTML = `<i class="fa-solid ${type === 'error' ? 'fa-circle-exclamation' : 'fa-check-circle'}"></i> <span>${msg}</span>`;
-            container.appendChild(toast);
-            
-            requestAnimationFrame(() => toast.classList.remove('translate-x-full'));
-            setTimeout(() => {
-                toast.classList.add('translate-x-full', 'opacity-0');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        };
+            if (allTags.size === 0) {
+                container.innerHTML = '<span class="text-sm text-slate-400 dark:text-slate-500">No tags used yet.</span>';
+                return;
+            }
 
-        // --- All Files Page Functions ---
-        function renderAllFiles(items, filter = '') {
-            const tbody = document.getElementById('all-files-tbody');
-            const filterText = filter.toLowerCase();
-            
-            const filteredItems = items.filter(item => 
-                item.title.toLowerCase().includes(filterText)
-            );
+            container.innerHTML = Array.from(allTags).sort().map(tag => {
+                const isActive = activeTagFilter === tag;
+                const activeClasses = isActive 
+                    ? 'bg-indigo-500 text-white shadow-md' 
+                    : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700';
+                return `<button onclick="window.filterByTag('${tag}')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${activeClasses}">${tag}</button>`;
+            }).join('');
+        }
 
-            if (filteredItems.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="4" class="p-6 text-center text-slate-500">
-                            <i class="fa-solid ${filter ? 'fa-search' : 'fa-wind'} text-2xl mb-2"></i>
-                            <p>${filter ? 'No files match your search.' : 'It\'s quiet here. No files uploaded yet.'}</p>
-                        </td>
-                    </tr>
+        function renderFeed(filteredItems) {
+            const feed = document.getElementById('feed');
+            const countEl = document.getElementById('item-count');
+            countEl.textContent = `${filteredItems.length} Items`;
+
+            const itemsToShow = filteredItems.slice(0, feedLimit);
+            const loadMoreBtn = document.getElementById('feed-load-more-container');
+            
+            if (filteredItems.length > feedLimit) loadMoreBtn.classList.remove('hidden');
+            else loadMoreBtn.classList.add('hidden');
+
+            if (itemsToShow.length === 0) {
+                feed.innerHTML = `
+                    <div class="bg-white dark:bg-slate-800 p-8 rounded-2xl text-center text-slate-500 dark:text-slate-400 shadow-sm border border-transparent dark:border-slate-700">
+                        <i class="fa-solid fa-wind text-3xl mb-3 opacity-50"></i>
+                        <p>No files found here. Be the first to share.</p>
+                    </div>
                 `;
                 return;
             }
 
-            tbody.innerHTML = ''; 
-
-            filteredItems.forEach(data => {
-                // FIXED: Changed uploaderId to uploader_id and uid to id
+            feed.innerHTML = '';
+            itemsToShow.forEach(data => {
                 const isOwner = currentUser && data.uploader_id === currentUser.id;
                 
-                let iconClass = 'fa-file';
-                let iconBg = 'bg-indigo-100 text-indigo-600';
-                
-                if (data.type === 'link') {
-                    iconClass = 'fa-link';
-                    iconBg = 'bg-emerald-100 text-emerald-600';
-                } else if (data.file_type && data.file_type.includes('image')) {
-                    iconClass = 'fa-image';
-                    iconBg = 'bg-pink-100 text-pink-600';
-                } else if (data.file_type && data.file_type.includes('pdf')) {
-                    iconClass = 'fa-file-pdf';
-                    iconBg = 'bg-red-100 text-red-600';
-                } else if (data.file_type && (data.file_type.includes('word') || data.file_type.includes('document'))) {
-                    iconClass = 'fa-file-word';
-                    iconBg = 'bg-blue-100 text-blue-600';
-                }
+                let iconClass = 'fa-file'; let iconBg = 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400';
+                if (data.type === 'link') { iconClass = 'fa-link'; iconBg = 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400'; } 
+                else if (data.file_type && data.file_type.includes('image')) { iconClass = 'fa-image'; iconBg = 'bg-pink-100 dark:bg-pink-900/40 text-pink-600 dark:text-pink-400'; } 
+                else if (data.file_type && data.file_type.includes('pdf')) { iconClass = 'fa-file-pdf'; iconBg = 'bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400'; }
 
-                // FIXED: Supabase dates are ISO strings
-                const dateStr = data.created_at ? new Date(data.created_at).toLocaleDateString() : 'N/A';
+                const dateStr = data.created_at ? new Date(data.created_at).toLocaleDateString(undefined, {month:'short', day:'numeric'}) : 'Just now';
+                const sizeStr = data.file_size ? `<span class="mx-1.5 text-slate-300 dark:text-slate-600">•</span> <span>${formatBytes(data.file_size)}</span>` : '';
+
+                let previewBtn = (data.type === 'file' && data.file_type && (data.file_type.startsWith('image/') || data.file_type === 'application/pdf')) 
+                    ? `<button onclick="window.previewItem('${data.id}')" class="p-2.5 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors tooltip"><i class="fa-solid fa-eye"></i></button>` : '';
+
+                const tagsArray = data.tags ? data.tags.split(',').map(t => t.trim()).filter(t => t) : [];
+                const tagsHtml = tagsArray.map(t => `<span onclick="window.filterByTag('${t}')" class="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded text-[10px] font-bold uppercase cursor-pointer hover:bg-indigo-100 dark:hover:bg-indigo-800 transition-colors">${t}</span>`).join('');
+
+                const cardBgClass = data.is_pinned && !activeTagFilter ? 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 shadow-md' : 'bg-white dark:bg-slate-800 border border-transparent dark:border-slate-700 shadow-sm';
+                const pinBadgeHtml = data.is_pinned && !activeTagFilter ? `<span class="bg-amber-100 dark:bg-amber-800/50 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider text-[10px]"><i class="fa-solid fa-thumbtack mr-1"></i> Pinned</span>` : '';
+
+                const upvotedLocal = localStorage.getItem(`upvoted_${data.id}`);
+                const upvoteBtnColor = upvotedLocal ? 'text-emerald-500 dark:text-emerald-400' : 'text-slate-400 hover:text-emerald-500 dark:hover:text-emerald-400';
                 
-                let previewButtonHtml = '';
-                if (data.type === 'file' && data.file_type && (data.file_type.startsWith('image/') || data.file_type === 'application/pdf')) {
-                    previewButtonHtml = `
-                        <button onclick="window.previewItem('${data.id}')" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-blue-600 rounded-lg transition-colors" title="Preview">
-                            <i class="fa-solid fa-eye"></i>
-                        </button>
-                    `;
-                }
+                const el = document.createElement('div');
+                el.className = `p-5 rounded-2xl card-enter group hover:shadow-md transition-all ${cardBgClass}`;
+                el.innerHTML = `
+                    <div class="flex gap-4">
+                        <div class="flex flex-col items-center justify-start pt-1 gap-1">
+                            <button id="upvote-btn-${data.id}" onclick="window.upvoteItem('${data.id}', ${data.upvotes || 0})" class="${upvoteBtnColor} transition-colors p-1" title="Upvote">
+                                <i class="fa-solid fa-circle-arrow-up text-xl"></i>
+                            </button>
+                            <span id="upvote-text-${data.id}" class="text-xs font-bold text-slate-500 dark:text-slate-400">${data.upvotes || 0}</span>
+                        </div>
+                        
+                        <div class="flex-1 min-w-0">
+                            <div class="flex justify-between items-start">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl ${iconBg} flex items-center justify-center flex-shrink-0 shadow-sm"><i class="fa-solid ${iconClass}"></i></div>
+                                    <div>
+                                        <h4 class="font-bold text-slate-800 dark:text-slate-100 truncate pr-2 text-lg">${escapeHtml(data.title || '')}</h4>
+                                        <p class="text-xs text-slate-500 dark:text-slate-400 flex flex-wrap gap-y-1 items-center mt-0.5">
+                                            ${pinBadgeHtml} 
+                                            <span class="bg-slate-100 dark:bg-slate-700 px-1.5 rounded uppercase font-bold tracking-wider text-[10px] text-slate-600 dark:text-slate-300 mr-2">${data.type}</span>
+                                            <span>${dateStr}</span>
+                                            ${sizeStr}
+                                        </p>
+                                    </div>
+                                </div>
+                                ${isOwner ? `<button onclick="window.deleteItem('${data.id}', '${data.file_name || ''}')" class="text-slate-400 hover:text-red-500 transition-colors p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"><i class="fa-solid fa-trash-can"></i></button>` : ''}
+                            </div>
+                            
+                            ${tagsArray.length > 0 ? `<div class="flex flex-wrap gap-1 mt-3 pl-14">${tagsHtml}</div>` : ''}
+
+                            <div class="flex items-center gap-2 flex-wrap mt-4 pl-14">
+                                <a href="${data.content}" target="_blank" onclick="window.incrementDownload('${data.id}', ${data.downloads || 0}, '${data.content}')" class="inline-flex items-center gap-2 text-xs font-bold text-white bg-indigo-600 px-4 py-2.5 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">
+                                    <i class="fa-solid ${data.type === 'link' ? 'fa-arrow-up-right-from-square' : 'fa-download'}"></i> ${data.type === 'link' ? 'Open Link' : 'Download'} 
+                                    ${data.downloads > 0 ? `<span class="bg-indigo-500 px-1.5 py-0.5 rounded text-[10px]">${data.downloads}</span>` : ''}
+                                </a>
+                                ${previewBtn}
+                                <button onclick="window.copyToClipboard('${data.content}')" class="p-2.5 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors" title="Copy Link"><i class="fa-solid fa-link"></i></button>
+                                <button onclick="window.reportItem('${data.id}', ${data.reports || 0})" class="ml-auto text-xs font-bold text-slate-400 hover:text-red-500 flex items-center gap-1 transition-colors"><i class="fa-regular fa-flag"></i> Report</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                feed.appendChild(el);
+            });
+        }
+
+        function renderAllFiles(filteredItems) {
+            const tbody = document.getElementById('all-files-tbody');
+            
+            const itemsToShow = filteredItems.slice(0, tableLimit);
+            const loadMoreBtn = document.getElementById('table-load-more-container');
+            
+            if (filteredItems.length > tableLimit) loadMoreBtn.classList.remove('hidden');
+            else loadMoreBtn.classList.add('hidden');
+
+            if (itemsToShow.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-500"><i class="fa-solid fa-wind text-2xl mb-2"></i><p>No files found.</p></td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = ''; 
+            itemsToShow.forEach(data => {
+                const isOwner = currentUser && data.uploader_id === currentUser.id;
+                let iconClass = 'fa-file'; let iconBg = 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400';
+                if (data.type === 'link') { iconClass = 'fa-link'; iconBg = 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400'; } 
+                else if (data.file_type && data.file_type.includes('image')) { iconClass = 'fa-image'; iconBg = 'bg-pink-100 dark:bg-pink-900/40 text-pink-600 dark:text-pink-400'; } 
+                else if (data.file_type && data.file_type.includes('pdf')) { iconClass = 'fa-file-pdf'; iconBg = 'bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400'; }
+
+                const dateStr = data.created_at ? new Date(data.created_at).toLocaleDateString() : 'N/A';
+                const sizeStr = data.file_size ? `<div class="text-xs mt-1 font-mono">${formatBytes(data.file_size)}</div>` : '';
+                
+                const tagsArray = data.tags ? data.tags.split(',').map(t => t.trim()).filter(t => t) : [];
+                const tagsHtml = tagsArray.map(t => `<span class="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase">${t}</span>`).join(' ');
+
+                let previewBtn = data.type === 'file' && data.file_type && (data.file_type.startsWith('image/') || data.file_type === 'application/pdf') 
+                    ? `<button onclick="window.previewItem('${data.id}')" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors"><i class="fa-solid fa-eye"></i></button>` : '';
 
                 const el = document.createElement('tr');
-                el.className = "border-b border-slate-100 hover:bg-slate-50 transition-colors";
+                el.className = "border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors";
                 el.innerHTML = `
                     <td class="p-4">
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-lg ${iconBg} flex items-center justify-center flex-shrink-0 shadow-sm">
-                                <i class="fa-solid ${iconClass} text-base"></i>
-                            </div>
+                            <div class="w-10 h-10 rounded-lg ${iconBg} flex items-center justify-center flex-shrink-0 shadow-sm"><i class="fa-solid ${iconClass} text-base"></i></div>
                             <div>
-                                <div class="font-bold text-slate-800 truncate" style="max-width: 20rem;">${escapeHtml(data.title)}</div>
-                                <div class="text-xs text-slate-500 hidden sm:block truncate" style="max-width: 20rem;">${data.file_name || 'Web Link'}</div>
+                                <div class="font-bold text-slate-800 dark:text-slate-100 truncate max-w-xs md:max-w-md">${escapeHtml(data.title || '')}</div>
+                                <div class="flex gap-1 mt-1 flex-wrap">${tagsHtml}</div>
                             </div>
                         </div>
                     </td>
-                    <td class="p-4 text-sm text-slate-600 hidden md:table-cell">
-                        <span class="bg-slate-100 px-2 py-0.5 rounded uppercase font-bold tracking-wider text-[10px] text-slate-600">${data.type}</span>
+                    <td class="p-4 text-sm text-slate-600 dark:text-slate-400 hidden md:table-cell space-x-2">
+                        <span title="Upvotes"><i class="fa-solid fa-arrow-up text-emerald-500"></i> ${data.upvotes || 0}</span>
+                        <span title="Downloads"><i class="fa-solid fa-download text-indigo-400"></i> ${data.downloads || 0}</span>
                     </td>
-                    <td class="p-4 text-sm text-slate-600 hidden sm:table-cell">${dateStr}</td>
+                    <td class="p-4 text-sm text-slate-600 dark:text-slate-400 hidden sm:table-cell">
+                        <div>${dateStr}</div>
+                        ${sizeStr}
+                    </td>
                     <td class="p-4">
                         <div class="flex items-center justify-end gap-1">
-                            ${previewButtonHtml} 
-                            <a href="${data.content}" target="_blank" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-indigo-600 rounded-lg transition-colors" title="${data.type === 'link' ? 'Open Link' : 'Open/Download File'}">
-                                <i class="fa-solid ${data.type === 'link' ? 'fa-arrow-up-right-from-square' : 'fa-download'}"></i>
-                            </a>
-                            ${isOwner ? `
-                                <button onclick="window.deleteItem('${data.id}', '${data.file_name || ''}')" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-500 rounded-lg transition-colors" title="Delete">
-                                    <i class="fa-solid fa-trash-can"></i>
-                                </button>
-                            ` : ''}
+                            ${previewBtn} 
+                            <button onclick="window.copyToClipboard('${data.content}')" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg transition-colors" title="Copy Link"><i class="fa-solid fa-link"></i></button>
+                            <a href="${data.content}" target="_blank" onclick="window.incrementDownload('${data.id}', ${data.downloads || 0}, '${data.content}')" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg transition-colors" title="Open/Download"><i class="fa-solid ${data.type === 'link' ? 'fa-arrow-up-right-from-square' : 'fa-download'}"></i></a>
+                            ${isOwner ? `<button onclick="window.deleteItem('${data.id}', '${data.file_name || ''}')" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-500 rounded-lg transition-colors" title="Delete"><i class="fa-solid fa-trash-can"></i></button>` : ''}
                         </div>
                     </td>
                 `;
@@ -828,100 +795,81 @@
             });
         }
 
-        window.filterAllFiles = () => {
-            const filterText = document.getElementById('search-input').value;
-            renderAllFiles(allItems, filterText);
-        };
-
-        // ==========================================
-        // MAIN APP LOGIC
-        // ==========================================
-
+        // --- CORE LOGIC ---
         async function initApp() {
-            if (isLocalMode) {
-                console.warn("Running in Local Mode (No Firebase Config)");
-                currentUser = localUser;
-                updateStatus(true, currentUser.id, true);
-                loadLocalData();
-            } else {
-                try {
-                    // 1. Check if the browser ALREADY has a saved session
-                    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-                    
-                    if (sessionError) throw sessionError;
-
-                    let user = null;
-
-                    if (session && session.user) {
-                        // 2. Welcome back! Use the existing ID
-                        user = session.user;
-                    } else {
-                        // 3. First time here? Create a brand new anonymous ID
-                        const { data, error: signInError } = await supabase.auth.signInAnonymously();
-                        if (signInError) throw signInError;
-                        user = data.user;
-                    }
- 
-                    if (user) {
-                        currentUser = user;
-                        updateStatus(true, currentUser.id, false); 
-                        startOnlineListener();
-                    } else {
-                        updateStatus(false);
-                    }
-                 } catch (err) {
-                    console.error("Init failed:", err);
-                    window.showToast("Connection failed. Switching to Local Mode.", "error");
-                    currentUser = localUser;
-                    updateStatus(true, currentUser.id, true);
-                    loadLocalData();
+            try {
+                const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+                if (sessionError) throw sessionError;
+                let user = null;
+                if (session && session.user) {
+                    user = session.user;
+                } else {
+                    const { data, error: signInError } = await supabase.auth.signInAnonymously();
+                    if (signInError) throw signInError;
+                    user = data.user;
                 }
+                if (user) {
+                    currentUser = user;
+                    updateStatus(true, currentUser.id); 
+                    startOnlineListener();
+                } else {
+                    updateStatus(false);
+                }
+             } catch (err) {
+                console.error("Init failed:", err);
+                window.showToast("Connection failed.", "error");
+                updateStatus(false);
             }
         }
-        // --- UPLOAD HANDLER ---
+
         window.executeUpload = async () => {
             const btn = document.getElementById('btn-submit');
             const title = document.getElementById('title-input').value;
+            const rawTags = document.getElementById('tags-input').value; 
             
             if (!title) return window.showToast("Please add a title", "error");
 
             btn.disabled = true;
             btn.innerHTML = `<div class="loader"></div>`;
+            
+            const progressContainer = document.getElementById('upload-progress-container');
+            const progressBar = document.getElementById('upload-progress-bar');
+            const progressText = document.getElementById('upload-percent');
+            progressContainer.classList.remove('hidden');
+            progressBar.style.width = '0%';
+            
+            let progress = 0;
+            const simInterval = setInterval(() => {
+                progress += Math.random() * 15;
+                if(progress > 85) progress = 85; 
+                progressBar.style.width = `${progress}%`;
+                progressText.textContent = `${Math.floor(progress)}%`;
+            }, 300);
 
             try {
-               let contentUrl = '', fileName = '', fileType = 'link';
+               let contentUrl = '', fileName = '', fileType = 'link', fileSize = 0;
 
                if (currentUploadType === 'file') {
                    const file = document.getElementById('file-input').files[0];
                    if (!file) throw new Error("No file selected");
-                   
-                   // NEW: Increased limit to 5MB (5 * 1024 * 1024)
                    if (file.size > 5 * 1024 * 1024) throw new Error("File too large (>5MB)"); 
                 
-                   fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`; // Clean filename
+                   fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`; 
                    fileType = file.type;
+                   fileSize = file.size; 
          
-                   // 1. Upload physical file to Supabase Storage Bucket
-                   const { data: uploadData, error: uploadError } = await supabase
-                     .storage
-                     .from('academic-files')
-                     .upload(fileName, file);
-
+                   const { error: uploadError } = await supabase.storage.from('academic-files').upload(fileName, file);
                    if (uploadError) throw uploadError;
 
-                   // 2. Get the public URL for the file we just uploaded
-                   const { data: publicUrlData } = supabase
-                     .storage
-                     .from('academic-files')
-                     .getPublicUrl(fileName);
-                    
+                   const { data: publicUrlData } = supabase.storage.from('academic-files').getPublicUrl(fileName);
                    contentUrl = publicUrlData.publicUrl;
-
                } else {
                    const url = document.getElementById('link-input').value;
                    if (!url) throw new Error("No URL entered");
                    contentUrl = url.startsWith('http') ? url : 'https://' + url;
                }
+
+               const cleanTags = rawTags.split(',').map(t => t.trim()).filter(t => t).join(', ');
 
                const newDoc = {
                    type: currentUploadType,
@@ -929,31 +877,40 @@
                    content: contentUrl, 
                    file_name: fileName,
                    file_type: fileType,
-                   uploader_id: currentUser.id
+                   uploader_id: currentUser.id,
+                   tags: cleanTags,
+                   file_size: fileSize 
                };
 
-                 // 3. Save the details to the Supabase Database
-                  if (isLocalMode) {
-                    saveToLocalStorage(newDoc);
-                    loadLocalData();
-                 } else {
-                  const { error: dbError } = await supabase
-                  .from('files')
-                  .insert([newDoc]);
+                const { error: dbError } = await supabase.from('files').insert([newDoc]);
+                if (dbError) throw dbError;
+                
+                clearInterval(simInterval);
+                progressBar.style.width = '100%';
+                progressText.textContent = '100%';
+                document.getElementById('upload-status-text').textContent = 'Done!';
 
-                 if (dbError) throw dbError;
-                }
-
-                 window.showToast("Saved successfully!", "success");
-                 window.hideUploadModal();
-                 window.showPage('home'); // Go back to home after upload
-                 
-                document.getElementById('title-input').value = '';
-                document.getElementById('link-input').value = '';
-                document.getElementById('file-input').value = '';
-                document.getElementById('file-name-display').textContent = 'Tap to browse';
-
+                setTimeout(() => {
+                    try {
+                        window.showToast("Saved successfully!", "success");
+                        window.hideUploadModal();
+                        window.showPage('home');
+                        
+                        document.getElementById('title-input').value = '';
+                        document.getElementById('link-input').value = '';
+                        document.getElementById('tags-input').value = ''; 
+                        document.getElementById('file-input').value = '';
+                        document.getElementById('file-name-display').textContent = 'Tap to browse';
+                        document.getElementById('upload-status-text').textContent = 'Uploading to secure storage...';
+                    } catch (e) {
+                        console.error(e);
+                        window.hideUploadModal(); // Fail-safe close
+                    }
+                }, 600);
+                
             } catch (err) {
+              clearInterval(simInterval);
+              progressContainer.classList.add('hidden');
               console.error(err);
               window.showToast(err.message, "error");
             } finally {
@@ -962,198 +919,136 @@
             }
         };
 
-        // --- DELETE HANDLER FIXED ---
         window.deleteItem = async (id, fileName) => {
             if(!confirm("Are you sure you want to delete this item?")) return;
-            
-            if (isLocalMode) {
-                deleteFromLocalStorage(id);
-                loadLocalData();
-                window.showToast("Item deleted");
-            } else {
-                try {
-                    // 1. Delete from Supabase Database
-                    const { error: dbError } = await supabase.from('files').delete().eq('id', id);
-                    if (dbError) throw dbError;
-
-                    // 2. Delete from Supabase Storage (if it's a file, not a link)
-                    if (fileName && fileName !== 'undefined') {
-                        await supabase.storage.from('academic-files').remove([fileName]);
-                    }
-
-                    window.showToast("Item deleted");
-                } catch(err) {
-                    console.error("Delete failed:", err.message);
-                    window.showToast("Delete failed. Not authorized.", "error");
-                }
+            try {
+                const { error: dbError } = await supabase.from('files').delete().eq('id', id);
+                if (dbError) throw dbError;
+                if (fileName && fileName !== 'undefined') await supabase.storage.from('academic-files').remove([fileName]);
+                window.showToast("Item deleted", "success");
+            } catch(err) {
+                console.error("Delete failed:", err.message);
+                window.showToast("Delete failed. Not authorized.", "error");
             }
         };
 
-        // --- DATA LISTENERS ---
-        // --- DATA LISTENERS ---
-        function renderFeed(items) {
-            const feed = document.getElementById('feed');
-            const countEl = document.getElementById('item-count');
-            countEl.textContent = `${items.length} Items`;
-
-            if (items.length === 0) {
-                feed.innerHTML = `
-                    <div class="bg-white p-8 rounded-2xl text-center text-slate-500 shadow-sm">
-                        <i class="fa-solid fa-wind text-3xl mb-3 opacity-50"></i>
-                        <p>It's quiet here. Be the first to share.</p>
-                    </div>
-                `;
-                return;
-            }
-
-            feed.innerHTML = '';
-            items.forEach(data => {
-                // FIXED: uploader_id and currentUser.id
-                const isOwner = currentUser && data.uploader_id === currentUser.id;
-                
-                let iconClass = 'fa-file';
-                let iconBg = 'bg-indigo-100 text-indigo-600';
-                if (data.type === 'link') {
-                    iconClass = 'fa-link';
-                    iconBg = 'bg-emerald-100 text-emerald-600';
-                } else if (data.file_type && data.file_type.includes('image')) {
-                    iconClass = 'fa-image';
-                    iconBg = 'bg-pink-100 text-pink-600';
-                } else if (data.file_type && data.file_type.includes('pdf')) {
-                    iconClass = 'fa-file-pdf';
-                    iconBg = 'bg-red-100 text-red-600';
-                }
-
-                // FIXED: Supabase dates
-                const dateStr = data.created_at ? new Date(data.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : 'Just now';
-
-                let previewButtonHtml = '';
-                if (data.type === 'file' && data.file_type && (data.file_type.startsWith('image/') || data.file_type === 'application/pdf')) {
-                    previewButtonHtml = `
-                        <button onclick="window.previewItem('${data.id}')" class="inline-flex items-center gap-2 text-xs font-bold text-slate-600 bg-white border border-slate-200 px-3 py-2 rounded-lg hover:border-blue-400 hover:text-blue-600 transition-colors shadow-sm" title="Preview">
-                            Preview <i class="fa-solid fa-eye"></i>
-                        </button>
-                    `;
-                }
-
-                // NEW: Determine if it is pinned to change styles
-                const cardBgClass = data.is_pinned ? 'bg-amber-50/80 border border-amber-200 shadow-md' : 'bg-white border border-transparent shadow-sm';
-                const pinBadgeHtml = data.is_pinned ? `<span class="bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider text-[10px]"><i class="fa-solid fa-thumbtack mr-1"></i> Pinned</span>` : '';
-
-                const el = document.createElement('div');
-                // Updated class name to use the dynamic background
-                el.className = `p-4 rounded-2xl flex items-start gap-4 card-enter group hover:shadow-md transition-all ${cardBgClass}`;
-                el.innerHTML = `
-                    <div class="w-12 h-12 rounded-xl ${iconBg} flex items-center justify-center flex-shrink-0 shadow-sm">
-                        <i class="fa-solid ${iconClass} text-lg"></i>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex justify-between items-start">
-                            <h4 class="font-bold text-slate-800 truncate pr-2">${escapeHtml(data.title)}</h4>
-                            ${isOwner ? `
-                                <button onclick="window.deleteItem('${data.id}', '${data.file_name || ''}')" class="text-slate-400 hover:text-red-500 transition-colors px-2">
-                                    <i class="fa-solid fa-trash-can"></i>
-                                </button>
-                            ` : ''}
-                        </div>
-                        <p class="text-xs text-slate-500 mb-3 flex gap-2 items-center">
-                            ${pinBadgeHtml} 
-                            <span class="bg-slate-100 px-1.5 rounded uppercase font-bold tracking-wider text-[10px] text-slate-600">${data.type}</span>
-                            <span>${dateStr}</span>
-                        </p>
-                        <div class="flex items-center gap-2 flex-wrap">
-                            <a href="${data.content}" target="_blank" download="${data.file_name || 'file'}" class="inline-flex items-center gap-2 text-xs font-bold text-slate-600 bg-white border border-slate-200 px-3 py-2 rounded-lg hover:border-indigo-400 hover:text-indigo-600 transition-colors shadow-sm">
-                                ${data.type === 'link' ? 'Open Link' : 'Download File'} <i class="fa-solid ${data.type === 'link' ? 'fa-arrow-up-right-from-square' : 'fa-download'}"></i>
-                            </a>
-                            ${previewButtonHtml}
-                        </div>
-                    </div>
-                `;
-                feed.appendChild(el);
-            });
-        }
-
-        // --- ONLINE MODE ---
-        // --- ONLINE MODE ---
-        async function startOnlineListener() {
-            // 1. Fetch the initial data
-            const { data: files, error } = await supabase
-              .from('files')
-              .select('*')
-              .order('is_pinned', { ascending: false }) // NEW: Pinned posts at the top!
-              .order('created_at', { ascending: false }); // Then newest first
-        
+        async function fetchFiles() {
+            const { data: files, error } = await supabase.from('files').select('*').order('created_at', { ascending: false }); 
             if (!error && files) {
                 allItems = files;
-                renderFeed(files);
-                renderAllFiles(files, document.getElementById('search-input').value);
+                window.triggerRender();
             }
-
-            // 2. Listen for new uploads or deletes in real-time 
-            supabase
-                .channel('public:files')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'files' }, payload => {
-                    startOnlineListener(); 
-                })
-                .subscribe();
         }
 
-        // --- LOCAL MODE HELPER ---
-        function loadLocalData() {
-            const raw = localStorage.getItem('auraDropData');
-            const items = raw ? JSON.parse(raw) : [];
-            allItems = items; 
-            renderFeed(items);
-            renderAllFiles(items);
+        async function startOnlineListener() {
+            await fetchFiles(); 
+            supabase.channel('public:files').on('postgres_changes', { event: '*', schema: 'public', table: 'files' }, () => {
+                fetchFiles(); 
+            }).subscribe();
         }
 
-        function saveToLocalStorage(item) {
-            const raw = localStorage.getItem('auraDropData');
-            const items = raw ? JSON.parse(raw) : [];
-            item.id = 'local-' + Date.now();
-            items.unshift(item); 
-            localStorage.setItem('auraDropData', JSON.stringify(items));
-        }
+        // --- PREVIEW MODAL ---
+        window.previewItem = (id) => {
+            // FIXED: Converts both IDs to strings so they match perfectly
+            const item = allItems.find(i => String(i.id) === String(id));
+            if (!item) {
+                console.error("Item not found in allItems array. ID searched:", id);
+                return window.showToast("Error: Could not find item to preview.", "error");
+            }
+            window.showPreview(item.content, item.title, item.file_type); 
+        };
 
-        function deleteFromLocalStorage(id) {
-            const raw = localStorage.getItem('auraDropData');
-            let items = raw ? JSON.parse(raw) : [];
-            items = items.filter(i => i.id !== id);
-            localStorage.setItem('auraDropData', JSON.stringify(items));
-        }
+        window.showPreview = (content, title, fileType) => {
+            try {
+                const modal = document.getElementById('preview-modal');
+                const titleEl = document.getElementById('preview-title');
+                const contentEl = document.getElementById('preview-content-area');
+
+                titleEl.textContent = escapeHtml(title || '');
+                contentEl.innerHTML = ''; 
+                contentEl.scrollTop = 0; 
+
+                if (fileType && fileType.startsWith('image/')) {
+                    contentEl.className = "p-4 flex-1 overflow-auto bg-slate-100 dark:bg-slate-900 flex items-center justify-center";
+                    const img = document.createElement('img');
+                    img.src = content;
+                    img.className = "max-w-full max-h-full object-contain rounded-lg shadow-md";
+                    contentEl.appendChild(img);
+                } else if (fileType === 'application/pdf' || (typeof content === 'string' && content.startsWith('data:application/pdf'))) {
+                    contentEl.className = "p-4 flex-1 overflow-auto bg-slate-100 dark:bg-slate-900 block";
+                    const wrapper = document.createElement('div');
+                    wrapper.className = "w-full flex flex-col items-center gap-4";
+                    contentEl.appendChild(wrapper);
+
+                    const downloadBtn = document.createElement('div');
+                    downloadBtn.className = "w-full text-center mb-2";
+                    downloadBtn.innerHTML = `<a href="${content}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white text-xs font-bold shadow hover:bg-indigo-700 transition-colors" download="${title}.pdf"><i class="fa-solid fa-download"></i> Download Original</a>`;
+                    wrapper.appendChild(downloadBtn);
+
+                    // Added safety net for PDF Library loading
+                    const pdfLib = window['pdfjs-dist/build/pdf'] || window.pdfjsLib;
+                    if (!pdfLib) {
+                        wrapper.innerHTML += `<p class="text-red-500 text-sm mt-4">PDF Library failed to load. Please use the download button.</p>`;
+                    } else {
+                        const loadingTask = pdfLib.getDocument(content);
+                        loadingTask.promise.then(function(pdf) {
+                            for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                                const canvas = document.createElement('canvas');
+                                canvas.className = "w-full h-auto border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm bg-white mb-2";
+                                wrapper.appendChild(canvas); 
+
+                                pdf.getPage(pageNum).then(function(page) {
+                                    const scale = 1.5; 
+                                    const viewport = page.getViewport({scale: scale});
+                                    const context = canvas.getContext('2d');
+                                    canvas.height = viewport.height;
+                                    canvas.width = viewport.width;
+                                    page.render({ canvasContext: context, viewport: viewport });
+                                });
+                            }
+                        }).catch(err => {
+                            console.error(err);
+                            wrapper.innerHTML += `<p class="text-red-500 text-sm mt-4">Could not render PDF. Please use the download button.</p>`;
+                        });
+                    }
+                } else {
+                    contentEl.className = "p-4 flex-1 overflow-auto bg-slate-100 dark:bg-slate-900 flex items-center justify-center";
+                    contentEl.innerHTML = '<p class="text-slate-500 dark:text-slate-400">Preview is not available for this file type.</p>';
+                }
+
+                modal.classList.remove('hidden');
+                requestAnimationFrame(() => {
+                    modal.classList.remove('opacity-0');
+                    modal.querySelector('#preview-modal-content').classList.remove('scale-95');
+                    modal.querySelector('#preview-modal-content').classList.add('scale-100');
+                });
+            } catch (error) {
+                console.error("Preview error:", error);
+                window.showToast("Could not open preview.", "error");
+            }
+        };
+        
+        window.hidePreview = () => {
+            const modal = document.getElementById('preview-modal');
+            modal.classList.add('opacity-0');
+            modal.querySelector('#preview-modal-content').classList.remove('scale-100');
+            modal.querySelector('#preview-modal-content').classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); document.getElementById('preview-content-area').innerHTML = ''; }, 200);
+        };
 
         // --- UTILS ------
-        function dataURIToBlob(dataURI) {
-            const splitDataURI = dataURI.split(',');
-            const byteString = atob(splitDataURI[1]);
-            const mimeString = splitDataURI[0].split(':')[1].split(';')[0];
-            
-            const ab = new ArrayBuffer(byteString.length);
-            const ia = new Uint8Array(ab);
-            for (let i = 0; i < byteString.length; i++) {
-                ia[i] = byteString.charCodeAt(i);
-            }
-            return new Blob([ab], { type: mimeString });
-        }
-
-        function updateStatus(connected, uid, isLocal) {
+        function updateStatus(connected, uid) {
             const dot = document.getElementById('status-dot');
             const ping = document.getElementById('status-ping');
             const text = document.getElementById('connection-text');
             const idDisplay = document.getElementById('user-id-display');
 
-            if (isLocal) {
-                dot.className = "relative inline-flex rounded-full h-2 w-2 bg-amber-500";
-                ping.classList.add('hidden');
-                text.textContent = "Local Mode";
-                text.className = "font-medium text-amber-500";
-                idDisplay.textContent = "Offline";
-            } else if (connected) {
+            if (connected) {
                 dot.className = "relative inline-flex rounded-full h-2 w-2 bg-emerald-400";
                 ping.classList.remove('hidden');
                 text.textContent = "Online";
                 text.className = "font-medium text-emerald-400";
-                idDisplay.textContent = uid.slice(0, 5);
+                idDisplay.textContent = String(uid).slice(0, 5);
             } else {
                 dot.className = "relative inline-flex rounded-full h-2 w-2 bg-red-500";
                 ping.classList.add('hidden');
@@ -1165,18 +1060,19 @@
 
         function escapeHtml(text) {
             if (!text) return '';
-            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         }
 
-        // Start
+        function formatBytes(bytes, decimals = 1) {
+            if (!+bytes) return '0 Bytes';
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+        }
+
         initApp();
     </script>
 </body>
-
-
 </html>
-
-
-
-
-
